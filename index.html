@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Análise de Fretes - FAMA</title>
+    <style>
+        /* Estilos Gerais e Tema Claro (Padrão) */
+        :root {
+            --bg-color: #FFFFFF;
+            --text-color: #000000;
+            --card-bg: #f1f1f1;
+            --header-bg: #333333;
+            --header-text: #FFFFFF;
+            --border-color: #DDDDDD;
+            --highlight-color: #FF0000;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo {
+            height: 40px;
+            margin-right: 15px;
+        }
+
+        header h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+        
+        /* ... (restante do CSS aqui, já incluído no bloco final) ... */
+
+        /* Estilos Tema Escuro */
+        body.dark-theme {
+            --bg-color: #121212;
+            --text-color: #FFFFFF;
+            --card-bg: #1E1E1E;
+            --border-color: #444444;
+        }
+        
+        /* Upload Area */
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .upload-area:hover {
+            background-color: var(--card-bg);
+        }
+        .upload-area i { font-size: 32px; margin-bottom: 10px; }
+        .upload-area p { margin: 0; font-size: 14px; color: #888; }
+        .upload-area a { color: var(--highlight-color); font-weight: bold; text-decoration: none; }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .kpi-card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .kpi-card h3 { margin: 0 0 10px 0; font-size: 14px; font-weight: 500; }
+        .kpi-card .value { font-size: 28px; font-weight: bold; }
+        .kpi-card .value.highlight { color: var(--highlight-color); }
+
+        /* Tabela */
+        .data-table-container {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+        thead {
+            background-color: var(--header-bg);
+            color: var(--header-text);
+        }
+        tbody tr {
+            border-bottom: 1px solid var(--border-color);
+        }
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+        .status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.processed { background-color: #28a745; color: white; }
+        .status.pending { background-color: #ffc107; color: black; }
+        .actions i { cursor: pointer; margin: 0 5px; }
+
+        /* Toggle Switch */
+        .theme-switch-wrapper { display: flex; align-items: center; }
+        .theme-switch { display: inline-block; height: 34px; position: relative; width: 60px; }
+        .theme-switch input { display:none; }
+        .slider { background-color: #ccc; bottom: 0; cursor: pointer; left: 0; position: absolute; right: 0; top: 0; transition: .4s; border-radius: 34px; }
+        .slider:before { background-color: #fff; bottom: 4px; content: ""; height: 26px; left: 4px; position: absolute; transition: .4s; width: 26px; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--highlight-color); }
+        input:checked + .slider:before { transform: translateX(26px); }
+        .theme-switch-wrapper span { margin-left: 10px; }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="dark-theme">
+
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <img id="logo-img" src="https://ctfamadobrasil.com.br/wp-content/uploads/2025/12/Gemini_Generated_Image_v8cib8v8cib8v8ci-removebg-preview.png" alt="Logo Fama" class="logo">
+                <h1>Dashboard de Análise de Fretes</h1>
+            </div>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" checked/>
+                    <div class="slider round"></div>
+                </label>
+                <span id="theme-label">Tema Escuro</span>
+            </div>
+        </header>
+
+        <div class="upload-area" id="drop-zone">
+            <i class="fas fa-upload"></i>
+            <p>Arraste e solte os arquivos XML aqui ou <a href="#" id="upload-link">clique para selecionar</a></p>
+            <p><small>Apenas arquivos XML são suportados</small></p>
+            <input type="file" id="file-input" multiple accept=".xml" style="display: none;">
+        </div>
+        
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <h3><i class="fas fa-chart-line"></i> CUSTO TOTAL (MÊS)</h3>
+                <div id="kpi-custo-total" class="value">R$ 0,00</div>
+            </div>
+            <div class="kpi-card">
+                <h3><i class="fas fa-file-alt"></i> NF-ES PROCESSADAS</h3>
+                <div id="kpi-nfes-processadas" class="value">0</div>
+            </div>
+            <div class="kpi-card">
+                <h3><i class="fas fa-box"></i> CUSTO MÉDIO / TON</h3>
+                <div id="kpi-custo-ton" class="value">R$ 0,00</div>
+            </div>
+            <div class="kpi-card">
+                <h3><i class="fas fa-exclamation-circle"></i> TAXAS EXTRAS</h3>
+                <div id="kpi-taxas-extras" class="value highlight">R$ 0,00</div>
+            </div>
+        </div>
+        
+        <div class="data-table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>DATA</th>
+                        <th>CHAVE NF-E</th>
+                        <th>STATUS DA OPERAÇÃO</th>
+                        <th>QTD. CTES</th>
+                        <th>CUSTO TOTAL</th>
+                        <th>AÇÕES</th>
+                    </tr>
+                </thead>
+                <tbody id="data-table-body">
+                    <!-- Dados serão inseridos aqui pelo JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        // Importa o cliente Supabase
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+        // --- CONFIGURAÇÃO ---
+        const SUPABASE_URL = 'https://pdqkvyxufnprapkgsvxx.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkcWt2eXh1Zm5wcmFwa2dzdnh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMDE2MzAsImV4cCI6MjA3ODc3NzYzMH0.CFxmP1S8829joB6txKQ4bypp-Qr7SDHAg0P2Dgpti1k';
+        const N8N_PROCESS_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/processar-xml';
+        const N8N_DELETE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/excluir-registro-relatorio-cte';
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // --- LÓGICA DE TEMAS ---
+        const themeToggle = document.getElementById('checkbox');
+        const themeLabel = document.getElementById('theme-label');
+        const logoImg = document.getElementById('logo-img');
+        const logoClaro = 'https://ctfamadobrasil.com.br/wp-content/uploads/2025/09/logo.png';
+        const logoEscuro = 'https://ctfamadobrasil.com.br/wp-content/uploads/2025/12/Gemini_Generated_Image_v8cib8v8cib8v8ci-removebg-preview.png';
+
+        themeToggle.addEventListener('change', () => {
+            document.body.classList.toggle('dark-theme');
+            if(document.body.classList.contains('dark-theme')) {
+                themeLabel.textContent = 'Tema Escuro';
+                logoImg.src = logoEscuro;
+            } else {
+                themeLabel.textContent = 'Tema Claro';
+                logoImg.src = logoClaro;
+            }
+        });
+
+        // --- LÓGICA DE DADOS ---
+        const dataTableBody = document.getElementById('data-table-body');
+
+        async function fetchAndRenderData() {
+            const { data, error } = await supabase
+                .from('relatorio_consolidado')
+                .select('*')
+                .eq('ignorado', false) // Só pega os que não foram excluídos
+                .order('data_emissao_nfe', { ascending: false });
+
+            if (error) {
+                console.error('Erro ao buscar dados:', error);
+                return;
+            }
+
+            dataTableBody.innerHTML = ''; // Limpa a tabela
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${new Date(item.data_emissao_nfe).toLocaleDateString('pt-BR')}</td>
+                    <td>${item.chave_nfe.substring(0, 30)}...</td>
+                    <td><span class="status ${item.status_operacao === 'Processado' ? 'processed' : 'pending'}">${item.status_operacao}</span></td>
+                    <td>${item.qtd_ctes}</td>
+                    <td>${item.custo_frete_total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td>
+                        <i class="fas fa-eye" title="Visualizar XMLs" onclick="viewDetails('${item.link_primeiro_xml}')"></i>
+                        <i class="fas fa-trash" title="Excluir do Relatório" onclick="deleteRecord('${item.chave_nfe}')"></i>
+                    </td>
+                `;
+                dataTableBody.appendChild(tr);
+            });
+        }
+        
+        // --- FUNÇÕES GLOBAIS PARA AÇÕES ---
+        window.viewDetails = function(link) {
+            if (link) {
+                window.open(link, '_blank');
+            } else {
+                alert('Nenhum link de XML associado a este registro.');
+            }
+        }
+
+        window.deleteRecord = async function(chave_nfe) {
+            if (confirm(`Tem certeza que deseja remover a NF-e ${chave_nfe.substring(0,10)}... do relatório?`)) {
+                try {
+                    const response = await fetch(N8N_DELETE_WEBHOOK, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chave_nfe_para_excluir: chave_nfe })
+                    });
+                    if (response.ok) {
+                        alert('Registro marcado para exclusão. A tabela será atualizada.');
+                        fetchAndRenderData(); // Atualiza a visualização
+                    } else {
+                        throw new Error('Falha na resposta do servidor.');
+                    }
+                } catch (error) {
+                    console.error('Erro ao chamar webhook de exclusão:', error);
+                    alert('Ocorreu um erro ao tentar excluir o registro.');
+                }
+            }
+        }
+        
+        // --- LÓGICA DE UPLOAD ---
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const uploadLink = document.getElementById('upload-link');
+
+        uploadLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            fileInput.click();
+        });
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.backgroundColor = '#333';
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.backgroundColor = 'transparent';
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.backgroundColor = 'transparent';
+            handleFileUpload(e.dataTransfer.files);
+        });
+        
+        fileInput.addEventListener('change', () => {
+             handleFileUpload(fileInput.files);
+        });
+
+        async function handleFileUpload(files) {
+            alert(`Iniciando o processamento de ${files.length} arquivo(s). Por favor, aguarde a atualização da tabela.`);
+            
+            // ATENÇÃO: A lógica de upload para o Google Drive deve ser implementada aqui.
+            // Para este MVP, vamos simular a chamada ao webhook.
+            for (const file of files) {
+                console.log(`Processando: ${file.name}, Tamanho: ${file.size} bytes`);
+                
+                // --- Ponto de Integração Futuro ---
+                // 1. Aqui entraria o código para fazer upload do 'file' para o Google Drive.
+                // 2. A API do Google Drive retornaria um 'fileId'.
+                // 3. Este 'fileId' seria enviado para o webhook do n8n.
+                
+                // Simulação da chamada ao webhook (substitua 'SIMULATED_FILE_ID' pelo ID real do GDrive)
+                try {
+                    const response = await fetch(N8N_PROCESS_WEBHOOK, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ fileId: 'SIMULATED_FILE_ID_REPLACE_ME', fileName: file.name })
+                    });
+                     if (!response.ok) {
+                        console.error(`Erro ao processar o arquivo ${file.name}`);
+                    }
+                } catch(error) {
+                    console.error(`Falha grave ao chamar o webhook para ${file.name}:`, error);
+                }
+            }
+            // Após enviar todos os arquivos para processamento, damos um tempo e atualizamos a tabela.
+            setTimeout(fetchAndRenderData, 5000); // Espera 5s para o n8n começar a processar
+        }
+
+        // --- INICIALIZAÇÃO E REALTIME ---
+        fetchAndRenderData(); // Carrega os dados iniciais
+
+        // Ouve por mudanças na tabela em tempo real
+        supabase
+            .channel('public:relatorio_consolidado')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'relatorio_consolidado' }, payload => {
+                console.log('Mudança recebida!', payload);
+                fetchAndRenderData(); // Re-renderiza a tabela quando algo muda
+            })
+            .subscribe();
+
+    </script>
+</body>
+</html>
