@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Análise de Fretes - FAMA</title>
     <style>
-        /* Estilos Gerais e Tema Claro (Padrão) */
         :root {
             --bg-color: #FFFFFF;
             --text-color: #000000;
@@ -14,6 +13,8 @@
             --header-text: #FFFFFF;
             --border-color: #DDDDDD;
             --highlight-color: #FF0000;
+            --tab-inactive-bg: #e0e0e0;
+            --tab-active-bg: #FFFFFF;
         }
 
         body {
@@ -25,7 +26,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1300px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -51,18 +52,16 @@
             font-size: 24px;
             margin: 0;
         }
-        
-        /* ... (restante do CSS aqui, já incluído no bloco final) ... */
 
-        /* Estilos Tema Escuro */
         body.dark-theme {
             --bg-color: #121212;
             --text-color: #FFFFFF;
             --card-bg: #1E1E1E;
             --border-color: #444444;
+            --tab-inactive-bg: #2a2a2a;
+            --tab-active-bg: #121212;
         }
         
-        /* Upload Area */
         .upload-area {
             border: 2px dashed var(--border-color);
             border-radius: 8px;
@@ -75,14 +74,25 @@
         .upload-area:hover {
             background-color: var(--card-bg);
         }
-        .upload-area i { font-size: 32px; margin-bottom: 10px; }
-        .upload-area p { margin: 0; font-size: 14px; color: #888; }
-        .upload-area a { color: var(--highlight-color); font-weight: bold; text-decoration: none; }
+        .upload-area i {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: var(--highlight-color);
+        }
+        .upload-area p {
+            margin: 0;
+            font-size: 14px;
+            color: #888;
+        }
+        .upload-area a {
+            color: var(--highlight-color);
+            font-weight: bold;
+            text-decoration: none;
+        }
 
-        /* KPI Cards */
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
@@ -91,24 +101,61 @@
             border-radius: 8px;
             padding: 20px;
         }
-        .kpi-card h3 { margin: 0 0 10px 0; font-size: 14px; font-weight: 500; }
-        .kpi-card .value { font-size: 28px; font-weight: bold; }
-        .kpi-card .value.highlight { color: var(--highlight-color); }
+        .kpi-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #aaa;
+        }
+        .kpi-card .value {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .kpi-card .value.highlight {
+            color: var(--highlight-color);
+        }
 
-        /* Tabela */
+        .view-tabs {
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .tab-button {
+            padding: 10px 20px;
+            border: none;
+            border-bottom: 3px solid transparent;
+            background-color: transparent;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: -1px; /* Alinha com a borda de baixo */
+        }
+        .tab-button.active {
+            font-weight: bold;
+            border-bottom: 3px solid var(--highlight-color);
+        }
+        .view-content {
+            display: none;
+        }
+        .view-content.active {
+            display: block;
+        }
+
         .data-table-container {
             overflow-x: auto;
+            background-color: var(--card-bg);
+            border-radius: 8px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            background-color: var(--card-bg);
-            border-radius: 8px;
-            overflow: hidden;
         }
         th, td {
             padding: 12px 15px;
             text-align: left;
+            white-space: nowrap;
         }
         thead {
             background-color: var(--header-bg);
@@ -125,12 +172,14 @@
             border-radius: 12px;
             font-size: 12px;
             font-weight: bold;
+            text-align: center;
         }
-        .status.processed { background-color: #28a745; color: white; }
-        .status.pending { background-color: #ffc107; color: black; }
-        .actions i { cursor: pointer; margin: 0 5px; }
+        .status.processed { background-color: rgba(40, 167, 69, 0.2); color: #28a745; }
+        .status.pending { background-color: rgba(255, 193, 7, 0.2); color: #ffc107; }
+        .actions i { cursor: pointer; margin: 0 5px; color: #888; }
+        .actions i:hover { color: var(--highlight-color); }
+        .tag { font-size: 12px; background-color: var(--header-bg); color: var(--header-text); padding: 3px 6px; border-radius: 4px; margin-right: 5px; }
 
-        /* Toggle Switch */
         .theme-switch-wrapper { display: flex; align-items: center; }
         .theme-switch { display: inline-block; height: 34px; position: relative; width: 60px; }
         .theme-switch input { display:none; }
@@ -141,8 +190,6 @@
         .theme-switch-wrapper span { margin-left: 10px; }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body class="dark-theme">
@@ -171,44 +218,72 @@
         
         <div class="kpi-grid">
             <div class="kpi-card">
-                <h3><i class="fas fa-chart-line"></i> CUSTO TOTAL (MÊS)</h3>
+                <h3><i class="fas fa-dollar-sign"></i> CUSTO TOTAL (MÊS)</h3>
                 <div id="kpi-custo-total" class="value">R$ 0,00</div>
             </div>
             <div class="kpi-card">
-                <h3><i class="fas fa-file-alt"></i> NF-ES PROCESSADAS</h3>
-                <div id="kpi-nfes-processadas" class="value">0</div>
+                <h3><i class="fas fa-file-invoice-dollar"></i> % FRETE S/ NOTA (MÉDIA)</h3>
+                <div id="kpi-perc-frete" class="value highlight">0,00%</div>
             </div>
             <div class="kpi-card">
-                <h3><i class="fas fa-box"></i> CUSTO MÉDIO / TON</h3>
+                <h3><i class="fas fa-weight-hanging"></i> CUSTO MÉDIO / TON</h3>
                 <div id="kpi-custo-ton" class="value">R$ 0,00</div>
             </div>
             <div class="kpi-card">
-                <h3><i class="fas fa-exclamation-circle"></i> TAXAS EXTRAS</h3>
-                <div id="kpi-taxas-extras" class="value highlight">R$ 0,00</div>
+                <h3><i class="fas fa-file-alt"></i> NF-ES PROCESSADAS (MÊS)</h3>
+                <div id="kpi-nfes-processadas" class="value">0</div>
             </div>
         </div>
-        
-        <div class="data-table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>DATA</th>
-                        <th>CHAVE NF-E</th>
-                        <th>STATUS DA OPERAÇÃO</th>
-                        <th>QTD. CTES</th>
-                        <th>CUSTO TOTAL</th>
-                        <th>AÇÕES</th>
-                    </tr>
-                </thead>
-                <tbody id="data-table-body">
-                    <!-- Dados serão inseridos aqui pelo JavaScript -->
-                </tbody>
-            </table>
+
+        <div class="view-tabs">
+            <button class="tab-button active" data-view="consolidated-view">Relatório Consolidado</button>
+            <button class="tab-button" data-view="raw-data-view">Dados Processados (Brutos)</button>
+        </div>
+
+        <div id="consolidated-view" class="view-content active">
+            <div class="data-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>DATA EMISSÃO</th>
+                            <th>CHAVE NF-E</th>
+                            <th>STATUS</th>
+                            <th>QTD. CTES</th>
+                            <th>CUSTO FRETE</th>
+                            <th>% S/ NOTA</th>
+                            <th>CUSTO/KG</th>
+                            <th>AÇÕES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="consolidated-table-body">
+                        <!-- Dados consolidados serão inseridos aqui -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="raw-data-view" class="view-content">
+            <div class="data-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>DATA PROCESSAMENTO</th>
+                            <th>TIPO</th>
+                            <th>CHAVE DE ACESSO</th>
+                            <th>VALOR</th>
+                            <th>STATUS</th>
+                            <th>AÇÕES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="raw-data-table-body">
+                        <!-- Dados brutos (NF-e e CT-e) serão inseridos aqui -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script type="module">
-        // Importa o cliente Supabase
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
         // --- CONFIGURAÇÃO ---
@@ -228,49 +303,85 @@
 
         themeToggle.addEventListener('change', () => {
             document.body.classList.toggle('dark-theme');
-            if(document.body.classList.contains('dark-theme')) {
-                themeLabel.textContent = 'Tema Escuro';
-                logoImg.src = logoEscuro;
-            } else {
-                themeLabel.textContent = 'Tema Claro';
-                logoImg.src = logoClaro;
-            }
+            const isDarkMode = document.body.classList.contains('dark-theme');
+            themeLabel.textContent = isDarkMode ? 'Tema Escuro' : 'Tema Claro';
+            logoImg.src = isDarkMode ? logoEscuro : logoClaro;
         });
 
         // --- LÓGICA DE DADOS ---
-        const dataTableBody = document.getElementById('data-table-body');
+        const consolidatedTableBody = document.getElementById('consolidated-table-body');
+        const rawDataTableBody = document.getElementById('raw-data-table-body');
 
-        async function fetchAndRenderData() {
-            const { data, error } = await supabase
-                .from('relatorio_consolidado')
-                .select('*')
-                .eq('ignorado', false) // Só pega os que não foram excluídos
-                .order('data_emissao_nfe', { ascending: false });
+        async function fetchAndRenderConsolidatedData() {
+            const { data, error } = await supabase.from('relatorio_consolidado').select('*').eq('ignorado', false).order('data_emissao_nfe', { ascending: false });
+            if (error) { console.error('Erro ao buscar dados consolidados:', error); return; }
 
-            if (error) {
-                console.error('Erro ao buscar dados:', error);
-                return;
-            }
-
-            dataTableBody.innerHTML = ''; // Limpa a tabela
+            consolidatedTableBody.innerHTML = '';
             data.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${new Date(item.data_emissao_nfe).toLocaleDateString('pt-BR')}</td>
-                    <td>${item.chave_nfe.substring(0, 30)}...</td>
-                    <td><span class="status ${item.status_operacao === 'Processado' ? 'processed' : 'pending'}">${item.status_operacao}</span></td>
+                    <td>${new Date(item.data_emissao_nfe).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>
+                    <td>${item.chave_nfe.substring(0, 25)}...</td>
+                    <td><span class="status ${item.status_operacao === 'Processado' ? 'processed' : 'pending'}">${item.status_operacao || 'Pendente'}</span></td>
                     <td>${item.qtd_ctes}</td>
-                    <td>${item.custo_frete_total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                    <td>
-                        <i class="fas fa-eye" title="Visualizar XMLs" onclick="viewDetails('${item.link_primeiro_xml}')"></i>
-                        <i class="fas fa-trash" title="Excluir do Relatório" onclick="deleteRecord('${item.chave_nfe}')"></i>
+                    <td>${(item.custo_frete_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td>${(item.percentual_frete_nota || 0).toFixed(2)}%</td>
+                    <td>${(item.custo_por_kg || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td class="actions">
+                        <i class="fas fa-eye" title="Visualizar XML Principal" onclick="window.viewDetails('${item.link_xml_principal}')"></i>
+                        <i class="fas fa-trash" title="Excluir do Relatório" onclick="window.deleteRecord('${item.chave_nfe}')"></i>
                     </td>
                 `;
-                dataTableBody.appendChild(tr);
+                consolidatedTableBody.appendChild(tr);
             });
         }
         
-        // --- FUNÇÕES GLOBAIS PARA AÇÕES ---
+        async function fetchAndRenderRawData() {
+            const { data: ctes, error: ctesError } = await supabase.from('ctes_processados').select('*').order('created_at', { ascending: false }).limit(50);
+            const { data: nfes, error: nfesError } = await supabase.from('nfes_processadas').select('*').order('created_at', { ascending: false }).limit(50);
+
+            if (ctesError || nfesError) { console.error('Erro ao buscar dados brutos:', ctesError || nfesError); return; }
+
+            const combinedData = [
+                ...ctes.map(d => ({ ...d, type: 'CT-e', key: d.chave_acesso_propria, value: d.valor_servico, link: d.link_xml })),
+                ...nfes.map(d => ({ ...d, type: 'NF-e', key: d.chave_acesso_propria, value: d.valor_total_nota, link: d.link_xml }))
+            ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+            rawDataTableBody.innerHTML = '';
+            combinedData.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${new Date(item.created_at).toLocaleString('pt-BR')}</td>
+                    <td><span class="tag">${item.type}</span></td>
+                    <td>${item.key.substring(0, 25)}...</td>
+                    <td>${(item.value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td><span class="status processed">Processado</span></td>
+                    <td class="actions"><i class="fas fa-eye" title="Visualizar XML" onclick="window.viewDetails('${item.link}')"></i></td>
+                `;
+                rawDataTableBody.appendChild(tr);
+            });
+        }
+        
+        function setupTabs() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const viewContents = document.querySelectorAll('.view-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+
+                    const viewId = button.getAttribute('data-view');
+                    viewContents.forEach(content => {
+                        content.classList.remove('active');
+                        if(content.id === viewId) {
+                            content.classList.add('active');
+                        }
+                    });
+                });
+            });
+        }
+
         window.viewDetails = function(link) {
             if (link) {
                 window.open(link, '_blank');
@@ -280,19 +391,15 @@
         }
 
         window.deleteRecord = async function(chave_nfe) {
-            if (confirm(`Tem certeza que deseja remover a NF-e ${chave_nfe.substring(0,10)}... do relatório?`)) {
+            if (confirm(`Tem certeza que deseja remover a NF-e ${chave_nfe.substring(0,10)}... do relatório? Esta ação não pode ser desfeita.`)) {
                 try {
                     const response = await fetch(N8N_DELETE_WEBHOOK, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ chave_nfe_para_excluir: chave_nfe })
                     });
-                    if (response.ok) {
-                        alert('Registro marcado para exclusão. A tabela será atualizada.');
-                        fetchAndRenderData(); // Atualiza a visualização
-                    } else {
-                        throw new Error('Falha na resposta do servidor.');
-                    }
+                    if (!response.ok) throw new Error('Falha na resposta do servidor.');
+                    alert('Registro marcado para exclusão. A tabela será atualizada em breve.');
                 } catch (error) {
                     console.error('Erro ao chamar webhook de exclusão:', error);
                     alert('Ocorreu um erro ao tentar excluir o registro.');
@@ -300,78 +407,52 @@
             }
         }
         
-        // --- LÓGICA DE UPLOAD ---
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
         const uploadLink = document.getElementById('upload-link');
 
-        uploadLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            fileInput.click();
-        });
-        
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.style.backgroundColor = '#333';
-        });
-
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.style.backgroundColor = 'transparent';
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.style.backgroundColor = 'transparent';
-            handleFileUpload(e.dataTransfer.files);
-        });
-        
-        fileInput.addEventListener('change', () => {
-             handleFileUpload(fileInput.files);
-        });
+        uploadLink.addEventListener('click', (e) => { e.preventDefault(); fileInput.click(); });
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--highlight-color)'; });
+        dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = 'var(--border-color)'; });
+        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--border-color)'; handleFileUpload(e.dataTransfer.files); });
+        fileInput.addEventListener('change', () => { handleFileUpload(fileInput.files); });
 
         async function handleFileUpload(files) {
-            alert(`Iniciando o processamento de ${files.length} arquivo(s). Por favor, aguarde a atualização da tabela.`);
+            alert(`Iniciando o processamento de ${files.length} arquivo(s). Por favor, aguarde a atualização automática da tabela.`);
             
-            // ATENÇÃO: A lógica de upload para o Google Drive deve ser implementada aqui.
-            // Para este MVP, vamos simular a chamada ao webhook.
             for (const file of files) {
-                console.log(`Processando: ${file.name}, Tamanho: ${file.size} bytes`);
+                console.log(`Simulando chamada para processar: ${file.name}`);
                 
-                // --- Ponto de Integração Futuro ---
-                // 1. Aqui entraria o código para fazer upload do 'file' para o Google Drive.
-                // 2. A API do Google Drive retornaria um 'fileId'.
-                // 3. Este 'fileId' seria enviado para o webhook do n8n.
+                // TODO: Implementar upload para Google Drive e obter o fileId real.
+                const simulatedFileId = 'ID_DO_ARQUIVO_DO_GDRIVE_VAI_AQUI';
                 
-                // Simulação da chamada ao webhook (substitua 'SIMULATED_FILE_ID' pelo ID real do GDrive)
                 try {
-                    const response = await fetch(N8N_PROCESS_WEBHOOK, {
+                    await fetch(N8N_PROCESS_WEBHOOK, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ fileId: 'SIMULATED_FILE_ID_REPLACE_ME', fileName: file.name })
+                        body: JSON.stringify({ fileId: simulatedFileId, fileName: file.name })
                     });
-                     if (!response.ok) {
-                        console.error(`Erro ao processar o arquivo ${file.name}`);
-                    }
                 } catch(error) {
                     console.error(`Falha grave ao chamar o webhook para ${file.name}:`, error);
+                    alert(`Não foi possível enviar o arquivo ${file.name} para processamento. Verifique o console.`);
                 }
             }
-            // Após enviar todos os arquivos para processamento, damos um tempo e atualizamos a tabela.
-            setTimeout(fetchAndRenderData, 5000); // Espera 5s para o n8n começar a processar
         }
 
-        // --- INICIALIZAÇÃO E REALTIME ---
-        fetchAndRenderData(); // Carrega os dados iniciais
+        function initialize() {
+            setupTabs();
+            fetchAndRenderConsolidatedData();
+            fetchAndRenderRawData();
 
-        // Ouve por mudanças na tabela em tempo real
-        supabase
-            .channel('public:relatorio_consolidado')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'relatorio_consolidado' }, payload => {
-                console.log('Mudança recebida!', payload);
-                fetchAndRenderData(); // Re-renderiza a tabela quando algo muda
-            })
-            .subscribe();
+            supabase
+                .channel('public-db-changes')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'relatorio_consolidado' }, () => fetchAndRenderConsolidatedData())
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'ctes_processados' }, () => fetchAndRenderRawData())
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'nfes_processadas' }, () => fetchAndRenderRawData())
+                .subscribe();
+        }
 
+        initialize();
     </script>
 </body>
 </html>
