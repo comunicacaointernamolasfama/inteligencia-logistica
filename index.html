@@ -233,6 +233,22 @@
                 <h3><i class="fas fa-file-alt"></i> NF-ES PROCESSADAS (MÊS)</h3>
                 <div id="kpi-nfes-processadas" class="value">0</div>
             </div>
+            <div class="kpi-card">
+                <h3><i class="fas fa-exclamation-triangle"></i> CUSTO TAXAS EXTRAS</h3>
+                <div id="kpi-taxas-extras" class="value highlight">R$ 0,00</div>
+            </div>
+            <div class="kpi-card">
+                <h3><i class="fas fa-truck-loading"></i> PESO TOTAL (TON)</h3>
+                <div id="kpi-peso-total" class="value">0,00</div>
+            </div>
+            <div class="kpi-card">
+                <h3><i class="fas fa-archive"></i> VALOR TOTAL DAS NOTAS</h3>
+                <div id="kpi-valor-notas" class="value">R$ 0,00</div>
+            </div>
+            <div class="kpi-card">
+                <h3><i class="fas fa-hourglass-half"></i> CT-ES PENDENTES</h3>
+                <div id="kpi-ctes-pendentes" class="value">0</div>
+            </div>
         </div>
 
         <div class="view-tabs">
@@ -248,6 +264,7 @@
                             <th>DATA EMISSÃO</th>
                             <th>CHAVE NF-E</th>
                             <th>STATUS</th>
+                            <th>UF DESTINO</th>
                             <th>QTD. CTES</th>
                             <th>CUSTO FRETE</th>
                             <th>% S/ NOTA</th>
@@ -323,6 +340,7 @@
                     <td>${new Date(item.data_emissao_nfe).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>
                     <td>${item.chave_nfe.substring(0, 25)}...</td>
                     <td><span class="status ${item.status_operacao === 'Processado' ? 'processed' : 'pending'}">${item.status_operacao || 'Pendente'}</span></td>
+                    <td>${item.uf_destino || '--'}</td>
                     <td>${item.qtd_ctes}</td>
                     <td>${(item.custo_frete_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
                     <td>${(item.percentual_frete_nota || 0).toFixed(2)}%</td>
@@ -334,6 +352,12 @@
                 `;
                 consolidatedTableBody.appendChild(tr);
             });
+            
+            // Bloco para atualizar os novos KPIs (adicionar no final da função)
+            document.getElementById('kpi-taxas-extras').textContent = 'R$ 1.234,56'; // Exemplo
+            document.getElementById('kpi-peso-total').textContent = '12,34'; // Exemplo
+            document.getElementById('kpi-valor-notas').textContent = 'R$ 150.000,00'; // Exemplo
+            document.getElementById('kpi-ctes-pendentes').textContent = '5'; // Exemplo
         }
         
         async function fetchAndRenderRawData() {
