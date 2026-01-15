@@ -447,8 +447,7 @@
                             </tr>
                         </thead>
                         <tbody id="consolidated-table-body">
-                            <!-- Dados consolidados serão inseridos aqui -->
-                        </tbody>
+                            </tbody>
                     </table>
                 </div>
             </div>
@@ -471,15 +470,13 @@
                             </tr>
                         </thead>
                         <tbody id="raw-data-table-body">
-                            <!-- Dados brutos (NF-e e CT-e) serão inseridos aqui -->
-                        </tbody>
+                            </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Container para as notificações Toast -->
     <div class="toast-container" id="toast-container"></div>
 
     <script type="module">
@@ -579,7 +576,7 @@
 
             const combinedData = [
                 ...ctes.map(d => ({ ...d, type: 'CT-e', key: d.chave_acesso_propria, value: d.valor_servico, link: d.link_xml, transportadora: d.nome_transportadora, tipo_servico: d.tipo_servico_cte })),
-                ...nfes.map(d => ({ ...d, type: 'NF-e', key: d.chave_acesso_propria, value: d.valor_total_nota, link: d.link_xml, transportadora: '--', tipo_servico: '--' }))
+                ...nfes.map(d => ({ ...d, type: 'NF-e', key: d.chave_acesso_propria, value: d.valor_total_nota, link: d.link_xml, transportadora: d.nome_transportadora || '--', tipo_servico: '--' }))
             ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
             if (combinedData.length === 0) {
