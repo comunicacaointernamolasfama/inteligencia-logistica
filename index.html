@@ -640,21 +640,42 @@
         async function handleFileUpload(files) {
             if (files.length === 0) return;
             dropZone.classList.add('processing');
-            showToast(`Iniciando o processamento de ${files.length} arquivo(s).`, 'success');
+            showToast(`Iniciando upload de ${files.length} arquivo(s)...`, 'success');
             
+            const CLOUD_FUNCTION_URL = 'https://upload-xml-fama-960002953705.southamerica-east1.run.app';
+
             try {
-                const uploadPromises = Array.from(files).map(file => {
-                    const simulatedFileId = 'SIMULATED_GDRIVE_ID';
-                    return fetch(N8N_PROCESS_WEBHOOK, {
+                const uploadPromises = Array.from(files).map(async (file) => {
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    // 1. Envia o arquivo para a Cloud Function
+                    const uploadResponse = await fetch(CLOUD_FUNCTION_URL, {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    if (!uploadResponse.ok) {
+                        const errorData = await uploadResponse.json();
+                        throw new Error(`Falha no upload para ${file.name}: ${errorData.error}`);
+                    }
+                    
+                    const { fileId } = await uploadResponse.json();
+
+                    // 2. Envia o fileId para o Webhook do n8n
+                    await fetch(N8N_PROCESS_WEBHOOK, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ fileId: simulatedFileId, fileName: file.name })
+                        body: JSON.stringify({ fileId: fileId, fileName: file.name })
                     });
                 });
+
                 await Promise.all(uploadPromises);
-            } catch(error) {
-                console.error(`Falha ao chamar o webhook:`, error);
-                showToast('Ocorreu um erro ao enviar os arquivos.', 'error');
+                showToast(`Todos os ${files.length} arquivos foram enviados para processamento.`, 'success');
+
+            } catch (error) {
+                console.error(`Falha no processo de upload:`, error);
+                showToast(error.message || 'Ocorreu um erro ao enviar os arquivos.', 'error');
             } finally {
                 dropZone.classList.remove('processing');
                 fileInput.value = ''; // Limpa o input para permitir o re-upload do mesmo arquivo
