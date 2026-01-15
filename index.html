@@ -213,7 +213,11 @@
             letter-spacing: 0.05em;
             color: var(--text-secondary);
         }
-        th.sortable { cursor: pointer; position: relative; }
+        th.sortable { 
+            cursor: pointer; 
+            position: relative; 
+            padding-right: 30px; /* CORREÇÃO: Adiciona espaço extra para o ícone */
+        }
         th.sortable::after {
             content: '\2195'; opacity: 0.3; position: absolute;
             right: 10px; transition: opacity 0.2s;
@@ -246,13 +250,16 @@
         .tag { font-size: 12px; background-color: var(--header-bg); color: var(--header-text); padding: 4px 8px; border-radius: 6px; }
         
         /* --- Empty State --- */
+        /* CORREÇÃO: Alvo é a CÉLULA (td) que contém a mensagem */
+        td.empty-state-container {
+            text-align: center;
+        }
         .empty-state-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 80px 20px;
-            text-align: center;
         }
         .empty-state-container svg {
             width: 80px; height: 80px;
@@ -267,7 +274,7 @@
         .empty-state-container p {
             color: var(--text-secondary);
             margin: 0;
-            max-width: 300px;
+            max-width: 400px;
         }
 
         /* --- Busca e Ordenação --- */
@@ -489,17 +496,21 @@
         const consolidatedTableBody = document.getElementById('consolidated-table-body');
         const rawDataTableBody = document.getElementById('raw-data-table-body');
         const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
         
         // --- FUNÇÃO PARA RENDERIZAR "EMPTY STATE" ---
         function renderEmptyState(tbody, message, subMessage) {
+            // A classe 'empty-state-container' é aplicada diretamente ao TD
             tbody.innerHTML = `
                 <tr>
                     <td colspan="100%" class="empty-state-container">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                           <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125V6.375c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v.001c0 .621.504 1.125 1.125 1.125z" />
-                        </svg>
-                        <h3>${message}</h3>
-                        <p>${subMessage}</p>
+                        <div>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                               <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125V6.375c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v.001c0 .621.504 1.125 1.125 1.125z" />
+                            </svg>
+                            <h3>${message}</h3>
+                            <p>${subMessage}</p>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -624,7 +635,6 @@
         });
 
         // --- LÓGICA DE UPLOAD ---
-        const fileInput = document.getElementById('file-input');
         const uploadLink = document.getElementById('upload-link');
 
         uploadLink.addEventListener('click', (e) => { e.preventDefault(); fileInput.click(); });
