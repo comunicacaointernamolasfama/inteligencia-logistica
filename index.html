@@ -650,45 +650,41 @@
         async function handleFileUpload(files) {
             if (files.length === 0) return;
             dropZone.classList.add('processing');
-            showToast(`Iniciando upload de ${files.length} arquivo(s)...`, 'success');
-            
-            const CLOUD_FUNCTION_URL = 'https://upload-xml-fama-960002953705.southamerica-east1.run.app';
+            showToast(`Enviando ${files.length} arquivo(s) para a fila...`, 'success');
+
+            // URL do NOVO workflow de recebimento rápido
+            const N8N_QUEUE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/receber-xml';
 
             try {
                 const uploadPromises = Array.from(files).map(async (file) => {
                     const formData = new FormData();
+                    // O nome do campo 'file' deve corresponder ao configurado no webhook
                     formData.append('file', file);
 
-                    // 1. Envia o arquivo para a Cloud Function
-                    const uploadResponse = await fetch(CLOUD_FUNCTION_URL, {
+                    const response = await fetch(N8N_QUEUE_WEBHOOK, {
                         method: 'POST',
                         body: formData,
                     });
 
-                    if (!uploadResponse.ok) {
-                        const errorData = await uploadResponse.json();
-                        throw new Error(`Falha no upload para ${file.name}: ${errorData.error}`);
+                    if (!response.ok) {
+                        // Se o n8n retornar um erro, ele será capturado aqui
+                        throw new Error(`Falha ao enviar o arquivo ${file.name} para a fila.`);
                     }
-                    
-                    const { fileId } = await uploadResponse.json();
-
-                    // 2. Envia o fileId para o Webhook do n8n
-                    await fetch(N8N_PROCESS_WEBHOOK, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ fileId: fileId, fileName: file.name })
-                    });
+                    // Não precisamos mais esperar por uma resposta com fileId, a resposta é imediata
                 });
 
+                // Aguarda todas as requisições de envio serem completadas
                 await Promise.all(uploadPromises);
-                showToast(`Todos os ${files.length} arquivos foram enviados para processamento.`, 'success');
+                
+                showToast(`Todos os ${files.length} arquivos foram adicionados à fila de processamento.`, 'success');
 
             } catch (error) {
-                console.error(`Falha no processo de upload:`, error);
+                console.error(`Falha no processo de envio:`, error);
                 showToast(error.message || 'Ocorreu um erro ao enviar os arquivos.', 'error');
             } finally {
+                // Remove o spinner de carregamento independentemente do resultado
                 dropZone.classList.remove('processing');
-                fileInput.value = ''; // Limpa o input para permitir o re-upload do mesmo arquivo
+                fileInput.value = ''; // Limpa o input
             }
         }
         
