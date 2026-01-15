@@ -418,7 +418,7 @@
                 <input type="date" id="end-date">
             </div>
             <button id="apply-filter-btn">Aplicar Filtro</button>
-            <button id="clear-filter-btn">Limpar</button>
+            <button id="clear-filter-btn">Limpar / Atualizar</button>
         </div>
 
         <div class="view-tabs">
@@ -497,7 +497,6 @@
         
         // --- FUNÇÃO PARA RENDERIZAR "EMPTY STATE" ---
         function renderEmptyState(tbody, message, subMessage) {
-            // A classe 'empty-state-container' é aplicada diretamente ao TD
             tbody.innerHTML = `
                 <tr>
                     <td colspan="100%" class="empty-state-container">
@@ -512,6 +511,44 @@
                 </tr>
             `;
         }
+
+        // --- NOVA FUNÇÃO: CALCULAR E ATUALIZAR KPIs ---
+        function updateKpis(data) {
+            if (!data || data.length === 0) {
+                // Reseta os KPIs para o estado inicial se não houver dados
+                document.getElementById('kpi-custo-total').textContent = 'R$ 0,00';
+                document.getElementById('kpi-perc-frete').textContent = '0,00%';
+                document.getElementById('kpi-custo-ton').textContent = 'R$ 0,00';
+                document.getElementById('kpi-nfes-processadas').textContent = '0';
+                document.getElementById('kpi-taxas-extras').textContent = 'R$ 0,00';
+                document.getElementById('kpi-peso-total').textContent = '0,00';
+                document.getElementById('kpi-valor-notas').textContent = 'R$ 0,00';
+                document.getElementById('kpi-ctes-pendentes').textContent = '0';
+                return;
+            }
+
+            const totals = data.reduce((acc, item) => {
+                acc.custoTotal += item.custo_frete_total || 0;
+                acc.valorTotalNota += item.valor_total_nota || 0;
+                acc.pesoTotalTon += (item.peso_bruto_kg || 0) / 1000;
+                if ((item.qtd_ctes || 0) === 0) {
+                    acc.ctesPendentes += 1;
+                }
+                return acc;
+            }, { custoTotal: 0, valorTotalNota: 0, pesoTotalTon: 0, ctesPendentes: 0 });
+
+            const percentualFreteMedio = totals.valorTotalNota > 0 ? (totals.custoTotal / totals.valorTotalNota) * 100 : 0;
+            const custoMedioPorTon = totals.pesoTotalTon > 0 ? totals.custoTotal / totals.pesoTotalTon : 0;
+
+            document.getElementById('kpi-custo-total').textContent = totals.custoTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('kpi-perc-frete').textContent = `${percentualFreteMedio.toFixed(2)}%`;
+            document.getElementById('kpi-custo-ton').textContent = custoMedioPorTon.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('kpi-nfes-processadas').textContent = data.length;
+            document.getElementById('kpi-taxas-extras').textContent = 'R$ 0,00'; // Mantido como solicitado
+            document.getElementById('kpi-peso-total').textContent = totals.pesoTotalTon.toFixed(3);
+            document.getElementById('kpi-valor-notas').textContent = totals.valorTotalNota.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('kpi-ctes-pendentes').textContent = totals.ctesPendentes;
+        }
         
         // --- LÓGICA DE DADOS ---
         async function fetchAndRenderConsolidatedData(startDate, endDate) {
@@ -522,11 +559,14 @@
             const { data, error } = await query;
             if (error) { console.error('Erro ao buscar dados consolidados:', error); return; }
 
+            // **NOVO**: Chama a função de atualização dos KPIs com os dados buscados
+            updateKpis(data);
+
             if (data.length === 0) {
                 renderEmptyState(consolidatedTableBody, "Nenhum dado encontrado", "Tente ajustar os filtros ou importe novos arquivos XML.");
                 return;
             }
-
+            
             consolidatedTableBody.innerHTML = '';
             data.forEach(item => {
                 const tr = document.createElement('tr');
@@ -648,40 +688,23 @@
             if (files.length === 0) return;
             dropZone.classList.add('processing');
             showToast(`Enviando ${files.length} arquivo(s) para a fila...`, 'success');
-
-            // URL do NOVO workflow de recebimento rápido
             const N8N_QUEUE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/receber-xml';
 
             try {
                 const uploadPromises = Array.from(files).map(async (file) => {
                     const formData = new FormData();
-                    // O nome do campo 'file' deve corresponder ao configurado no webhook
                     formData.append('file', file);
-
-                    const response = await fetch(N8N_QUEUE_WEBHOOK, {
-                        method: 'POST',
-                        body: formData,
-                    });
-
-                    if (!response.ok) {
-                        // Se o n8n retornar um erro, ele será capturado aqui
-                        throw new Error(`Falha ao enviar o arquivo ${file.name} para a fila.`);
-                    }
-                    // Não precisamos mais esperar por uma resposta com fileId, a resposta é imediata
+                    const response = await fetch(N8N_QUEUE_WEBHOOK, { method: 'POST', body: formData });
+                    if (!response.ok) throw new Error(`Falha ao enviar o arquivo ${file.name} para a fila.`);
                 });
-
-                // Aguarda todas as requisições de envio serem completadas
                 await Promise.all(uploadPromises);
-                
                 showToast(`Todos os ${files.length} arquivos foram adicionados à fila de processamento.`, 'success');
-
             } catch (error) {
                 console.error(`Falha no processo de envio:`, error);
                 showToast(error.message || 'Ocorreu um erro ao enviar os arquivos.', 'error');
             } finally {
-                // Remove o spinner de carregamento independentemente do resultado
                 dropZone.classList.remove('processing');
-                fileInput.value = ''; // Limpa o input
+                fileInput.value = '';
             }
         }
         
@@ -755,9 +778,6 @@
                 row.style.display = isVisible ? '' : 'none';
                 if(isVisible) found = true;
             });
-            if(!found && term.length > 0) {
-                 // Adicionar lógica para mostrar "nenhum resultado para a busca" se desejar
-            }
         }
 
         function sortTableByColumn(table, columnIndex) {
@@ -814,11 +834,27 @@
             fetchAndRenderConsolidatedData();
             fetchAndRenderRawData();
 
+            // **REALTIME SUBSCRIPTION** - Escuta todas as mudanças nas tabelas relevantes
             supabase
                 .channel('public-db-changes')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'relatorio_consolidado' }, () => fetchAndRenderConsolidatedData())
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'ctes_processados' }, () => fetchAndRenderRawData())
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'nfes_processadas' }, () => fetchAndRenderRawData())
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'relatorio_consolidado' }, 
+                    () => {
+                        console.log('Realtime change detected on relatorio_consolidado. Refetching...');
+                        fetchAndRenderConsolidatedData()
+                    }
+                )
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'ctes_processados' }, 
+                    () => {
+                        console.log('Realtime change detected on ctes_processados. Refetching...');
+                        fetchAndRenderRawData() 
+                    }
+                )
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'nfes_processadas' }, 
+                    () => {
+                        console.log('Realtime change detected on nfes_processadas. Refetching...');
+                        fetchAndRenderRawData()
+                    }
+                )
                 .subscribe();
         }
 
