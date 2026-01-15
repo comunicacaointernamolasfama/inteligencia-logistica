@@ -61,6 +61,15 @@
             --tab-inactive-bg: #2a2a2a;
             --tab-active-bg: #121212;
         }
+
+        body:not(.dark-theme) .kpi-card h3 {
+            color: #555;
+        }
+
+        body:not(.dark-theme) thead {
+            background-color: #e9ecef; /* Um cinza claro e profissional */
+            color: #343a40; /* Texto escuro */
+        }
         
         .upload-area {
             border: 2px dashed var(--border-color);
@@ -106,6 +115,7 @@
             padding: 15px;
             background-color: var(--card-bg);
             border-radius: 8px;
+            flex-wrap: wrap;
         }
         .filter-group {
             display: flex;
@@ -234,7 +244,7 @@
 
         /* Estilos para Busca e Ordenação */
         .search-input {
-            width: 100%;
+            max-width: 400px;
             padding: 10px;
             margin-bottom: 15px;
             border-radius: 6px;
@@ -242,16 +252,22 @@
             background-color: var(--card-bg);
             color: var(--text-color);
             box-sizing: border-box; /* Para o padding não quebrar o layout */
+            font-size: 16px;
         }
         thead th {
             cursor: pointer;
             position: relative;
+            padding-right: 30px;
         }
-        thead th::after {
-            content: ' \2195'; /* Seta dupla para cima/baixo */
-            opacity: 0.4;
+        thead th.sortable::after {
+            content: '\2195'; /* Seta dupla para cima/baixo */
+            opacity: 0.3;
             position: absolute;
             right: 10px;
+            transition: opacity 0.2s;
+        }
+        thead th.sortable:hover::after {
+            opacity: 1;
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -341,16 +357,16 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>DATA EMISSÃO</th>
-                            <th>CHAVE NF-E</th>
-                            <th>CLIENTE (DESTINATÁRIO)</th>
-                            <th>UF</th>
-                            <th>VALOR NOTA</th>
-                            <th>PESO (TON)</th>
-                            <th>CUSTO FRETE</th>
-                            <th>% FRETE/NOTA</th>
-                            <th>CUSTO/TON</th>
-                            <th>QTD. CTES</th>
+                            <th class="sortable">DATA EMISSÃO</th>
+                            <th class="sortable">CHAVE NF-E</th>
+                            <th class="sortable">CLIENTE (DESTINATÁRIO)</th>
+                            <th class="sortable">UF</th>
+                            <th class="sortable">VALOR NOTA</th>
+                            <th class="sortable">PESO (TON)</th>
+                            <th class="sortable">CUSTO FRETE</th>
+                            <th class="sortable">% FRETE/NOTA</th>
+                            <th class="sortable">CUSTO/TON</th>
+                            <th class="sortable">QTD. CTES</th>
                             <th>AÇÕES</th>
                         </tr>
                     </thead>
@@ -367,12 +383,12 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>DATA PROC.</th>
-                            <th>TIPO</th>
-                            <th>CHAVE DE ACESSO</th>
-                            <th>TRANSPORTADORA</th>
-                            <th>SERVIÇO (CT-e)</th>
-                            <th>VALOR</th>
+                            <th class="sortable">DATA PROC.</th>
+                            <th class="sortable">TIPO</th>
+                            <th class="sortable">CHAVE DE ACESSO</th>
+                            <th class="sortable">TRANSPORTADORA</th>
+                            <th class="sortable">SERVIÇO (CT-e)</th>
+                            <th class="sortable">VALOR</th>
                             <th>AÇÕES</th>
                         </tr>
                     </thead>
@@ -598,6 +614,9 @@
         function sortTableByColumn(table, columnIndex) {
             const tbody = table.tBodies[0];
             const headerCell = table.tHead.querySelectorAll('th')[columnIndex];
+            // Ignora a coluna de ações que não é ordenável
+            if (!headerCell.classList.contains('sortable')) return;
+            
             const currentIsAscending = headerCell.dataset.sortDirection !== 'desc';
             const direction = currentIsAscending ? 'desc' : 'asc';
             headerCell.dataset.sortDirection = direction;
