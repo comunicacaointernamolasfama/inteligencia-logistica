@@ -231,6 +231,28 @@
         input:checked + .slider { background-color: var(--highlight-color); }
         input:checked + .slider:before { transform: translateX(26px); }
         .theme-switch-wrapper span { margin-left: 10px; }
+
+        /* Estilos para Busca e Ordenação */
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            box-sizing: border-box; /* Para o padding não quebrar o layout */
+        }
+        thead th {
+            cursor: pointer;
+            position: relative;
+        }
+        thead th::after {
+            content: ' \2195'; /* Seta dupla para cima/baixo */
+            opacity: 0.4;
+            position: absolute;
+            right: 10px;
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
@@ -314,18 +336,21 @@
         </div>
 
         <div id="consolidated-view" class="view-content active">
+            <input type="text" id="search-consolidated" class="search-input" placeholder="🔍 Buscar no Relatório Consolidado...">
             <div class="data-table-container">
                 <table>
                     <thead>
                         <tr>
                             <th>DATA EMISSÃO</th>
                             <th>CHAVE NF-E</th>
-                            <th>STATUS</th>
-                            <th>UF DESTINO</th>
-                            <th>QTD. CTES</th>
+                            <th>CLIENTE (DESTINATÁRIO)</th>
+                            <th>UF</th>
+                            <th>VALOR NOTA</th>
+                            <th>PESO (TON)</th>
                             <th>CUSTO FRETE</th>
-                            <th>% S/ NOTA</th>
-                            <th>CUSTO/KG</th>
+                            <th>% FRETE/NOTA</th>
+                            <th>CUSTO/TON</th>
+                            <th>QTD. CTES</th>
                             <th>AÇÕES</th>
                         </tr>
                     </thead>
@@ -337,15 +362,17 @@
         </div>
 
         <div id="raw-data-view" class="view-content">
+             <input type="text" id="search-raw" class="search-input" placeholder="🔍 Buscar em Dados Processados...">
             <div class="data-table-container">
                 <table>
                     <thead>
                         <tr>
-                            <th>DATA PROCESSAMENTO</th>
+                            <th>DATA PROC.</th>
                             <th>TIPO</th>
                             <th>CHAVE DE ACESSO</th>
+                            <th>TRANSPORTADORA</th>
+                            <th>SERVIÇO (CT-e)</th>
                             <th>VALOR</th>
-                            <th>STATUS</th>
                             <th>AÇÕES</th>
                         </tr>
                     </thead>
@@ -385,7 +412,8 @@
 
             console.log(`Filtro aplicado! De: ${startDate}, Até: ${endDate}`);
             // Futuramente, a chamada para buscar dados filtrados será feita aqui.
-            // Ex: fetchAndRenderData(startDate, endDate);
+            fetchAndRenderConsolidatedData(startDate, endDate);
+            fetchAndRenderRawData(startDate, endDate);
         });
 
         clearFilterBtn.addEventListener('click', () => {
@@ -393,7 +421,8 @@
             endDateInput.value = '';
             console.log('Filtros limpos!');
             // Futuramente, a chamada para buscar todos os dados será feita aqui.
-            // Ex: fetchAndRenderData();
+            fetchAndRenderConsolidatedData();
+            fetchAndRenderRawData();
         });
 
         // --- LÓGICA DE TEMAS ---
@@ -421,15 +450,18 @@
             consolidatedTableBody.innerHTML = '';
             data.forEach(item => {
                 const tr = document.createElement('tr');
+                const pesoEmTon = (item.peso_bruto_kg || 0) / 1000;
                 tr.innerHTML = `
                     <td>${new Date(item.data_emissao_nfe).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>
-                    <td>${item.chave_nfe.substring(0, 25)}...</td>
-                    <td><span class="status ${item.status_operacao === 'Processado' ? 'processed' : 'pending'}">${item.status_operacao || 'Pendente'}</span></td>
+                    <td>${item.chave_nfe.substring(0, 20)}...</td>
+                    <td>${item.nome_destinatario || 'N/A'}</td>
                     <td>${item.uf_destino || '--'}</td>
-                    <td>${item.qtd_ctes}</td>
+                    <td>${(item.valor_total_nota || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td>${pesoEmTon.toFixed(3)}</td>
                     <td>${(item.custo_frete_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
                     <td>${(item.percentual_frete_nota || 0).toFixed(2)}%</td>
-                    <td>${(item.custo_por_kg || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td>${(item.custo_por_ton || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td>${item.qtd_ctes}</td>
                     <td class="actions">
                         <i class="fas fa-eye" title="Visualizar XML Principal" onclick="window.viewDetails('${item.link_xml_principal}')"></i>
                         <i class="fas fa-trash" title="Excluir do Relatório" onclick="window.deleteRecord('${item.chave_nfe}')"></i>
@@ -452,8 +484,8 @@
             if (ctesError || nfesError) { console.error('Erro ao buscar dados brutos:', ctesError || nfesError); return; }
 
             const combinedData = [
-                ...ctes.map(d => ({ ...d, type: 'CT-e', key: d.chave_acesso_propria, value: d.valor_servico, link: d.link_xml })),
-                ...nfes.map(d => ({ ...d, type: 'NF-e', key: d.chave_acesso_propria, value: d.valor_total_nota, link: d.link_xml }))
+                ...ctes.map(d => ({ ...d, type: 'CT-e', key: d.chave_acesso_propria, value: d.valor_servico, link: d.link_xml, transportadora: d.nome_transportadora, tipo_servico: d.tipo_servico_cte })),
+                ...nfes.map(d => ({ ...d, type: 'NF-e', key: d.chave_acesso_propria, value: d.valor_total_nota, link: d.link_xml, transportadora: '--', tipo_servico: '--' }))
             ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
             rawDataTableBody.innerHTML = '';
@@ -462,9 +494,10 @@
                 tr.innerHTML = `
                     <td>${new Date(item.created_at).toLocaleString('pt-BR')}</td>
                     <td><span class="tag">${item.type}</span></td>
-                    <td>${item.key.substring(0, 25)}...</td>
+                    <td>${item.key.substring(0, 20)}...</td>
+                    <td>${item.transportadora || 'N/A'}</td>
+                    <td>${item.tipo_servico || 'N/A'}</td>
                     <td>${(item.value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                    <td><span class="status processed">Processado</span></td>
                     <td class="actions"><i class="fas fa-eye" title="Visualizar XML" onclick="window.viewDetails('${item.link}')"></i></td>
                 `;
                 rawDataTableBody.appendChild(tr);
@@ -491,24 +524,14 @@
             });
         }
 
-        window.viewDetails = function(link) {
-            if (link) {
-                window.open(link, '_blank');
-            } else {
-                alert('Nenhum link de XML associado a este registro.');
-            }
-        }
+        window.viewDetails = function(link) { if (link) window.open(link, '_blank'); else alert('Nenhum link de XML associado.'); }
 
         window.deleteRecord = async function(chave_nfe) {
-            if (confirm(`Tem certeza que deseja remover a NF-e ${chave_nfe.substring(0,10)}... do relatório? Esta ação não pode ser desfeita.`)) {
+            if (confirm(`Tem certeza que deseja remover a NF-e ${chave_nfe.substring(0,10)}... do relatório?`)) {
                 try {
-                    const response = await fetch(N8N_DELETE_WEBHOOK, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ chave_nfe_para_excluir: chave_nfe })
-                    });
+                    const response = await fetch(N8N_DELETE_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chave_nfe_para_excluir: chave_nfe }) });
                     if (!response.ok) throw new Error('Falha na resposta do servidor.');
-                    alert('Registro marcado para exclusão. A tabela será atualizada em breve.');
+                    alert('Registro marcado para exclusão. A tabela será atualizada.');
                 } catch (error) {
                     console.error('Erro ao chamar webhook de exclusão:', error);
                     alert('Ocorreu um erro ao tentar excluir o registro.');
@@ -527,29 +550,90 @@
         fileInput.addEventListener('change', () => { handleFileUpload(fileInput.files); });
 
         async function handleFileUpload(files) {
-            alert(`Iniciando o processamento de ${files.length} arquivo(s). Por favor, aguarde a atualização automática da tabela.`);
-            
+            alert(`Iniciando o processamento de ${files.length} arquivo(s). Aguarde a atualização da tabela.`);
             for (const file of files) {
-                console.log(`Simulando chamada para processar: ${file.name}`);
-                
-                // TODO: Implementar upload para Google Drive e obter o fileId real.
-                const simulatedFileId = 'ID_DO_ARQUIVO_DO_GDRIVE_VAI_AQUI';
-                
+                const simulatedFileId = 'SIMULATED_GDRIVE_ID';
                 try {
-                    await fetch(N8N_PROCESS_WEBHOOK, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ fileId: simulatedFileId, fileName: file.name })
-                    });
+                    await fetch(N8N_PROCESS_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fileId: simulatedFileId, fileName: file.name }) });
                 } catch(error) {
-                    console.error(`Falha grave ao chamar o webhook para ${file.name}:`, error);
-                    alert(`Não foi possível enviar o arquivo ${file.name} para processamento. Verifique o console.`);
+                    console.error(`Falha ao chamar o webhook para ${file.name}:`, error);
+                    alert(`Não foi possível enviar o arquivo ${file.name} para processamento.`);
                 }
             }
         }
 
+        // --- LÓGICA DE BUSCA E ORDENAÇÃO ---
+        function setupSearchAndSort() {
+            // Setup Search
+            document.getElementById('search-consolidated').addEventListener('keyup', (e) => {
+                filterTable(consolidatedTableBody, e.target.value);
+            });
+            document.getElementById('search-raw').addEventListener('keyup', (e) => {
+                filterTable(rawDataTableBody, e.target.value);
+            });
+
+            // Setup Sort
+            document.querySelectorAll('#consolidated-view th').forEach((headerCell, index) => {
+                headerCell.addEventListener('click', () => {
+                    const table = headerCell.closest('table');
+                    sortTableByColumn(table, index);
+                });
+            });
+             document.querySelectorAll('#raw-data-view th').forEach((headerCell, index) => {
+                headerCell.addEventListener('click', () => {
+                    const table = headerCell.closest('table');
+                    sortTableByColumn(table, index);
+                });
+            });
+        }
+
+        function filterTable(tbody, searchTerm) {
+            const term = searchTerm.toLowerCase();
+            Array.from(tbody.querySelectorAll('tr')).forEach(row => {
+                const rowText = row.textContent.toLowerCase();
+                row.style.display = rowText.includes(term) ? '' : 'none';
+            });
+        }
+
+        function sortTableByColumn(table, columnIndex) {
+            const tbody = table.tBodies[0];
+            const headerCell = table.tHead.querySelectorAll('th')[columnIndex];
+            const currentIsAscending = headerCell.dataset.sortDirection !== 'desc';
+            const direction = currentIsAscending ? 'desc' : 'asc';
+            headerCell.dataset.sortDirection = direction;
+
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            rows.sort((a, b) => {
+                let aText = a.querySelector(`td:nth-child(${columnIndex + 1})`).textContent.trim();
+                let bText = b.querySelector(`td:nth-child(${columnIndex + 1})`).textContent.trim();
+                
+                // Trata valores numéricos/monetários
+                const aNum = parseFloat(aText.replace(/[^0-9,-]+/g, '').replace(',', '.'));
+                const bNum = parseFloat(bText.replace(/[^0-9,-]+/g, '').replace(',', '.'));
+
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return currentIsAscending ? bNum - aNum : aNum - bNum;
+                }
+                
+                // Trata datas no formato dd/mm/aaaa
+                if (aText.match(/^\d{2}\/\d{2}\/\d{4}/)) {
+                    const aDate = new Date(aText.split('/').reverse().join('-'));
+                    const bDate = new Date(bText.split('/').reverse().join('-'));
+                    return currentIsAscending ? bDate - aDate : aDate - bDate;
+                }
+                
+                // Ordenação padrão (texto)
+                return aText.localeCompare(bText, undefined, { numeric: true }) * (currentIsAscending ? -1 : 1);
+            });
+            
+            tbody.innerHTML = '';
+            tbody.append(...rows);
+        }
+
         function initialize() {
             setupTabs();
+            setupSearchAndSort();
             fetchAndRenderConsolidatedData();
             fetchAndRenderRawData();
 
