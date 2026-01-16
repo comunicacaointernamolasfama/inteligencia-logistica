@@ -216,7 +216,7 @@
         th.sortable { 
             cursor: pointer; 
             position: relative; 
-            padding-right: 30px; /* CORREÇÃO: Adiciona espaço extra para o ícone */
+            padding-right: 30px; 
         }
         th.sortable::after {
             content: '\2195'; opacity: 0.3; position: absolute;
@@ -250,7 +250,6 @@
         .tag { font-size: 12px; background-color: var(--header-bg); color: var(--header-text); padding: 4px 8px; border-radius: 6px; }
         
         /* --- Empty State --- */
-        /* CORREÇÃO: Alvo é a CÉLULA (td) que contém a mensagem */
         td.empty-state-container {
             text-align: center;
         }
@@ -485,7 +484,7 @@
         // --- CONFIGURAÇÃO ---
         const SUPABASE_URL = 'https://pdqkvyxufnprapkgsvxx.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkcWt2eXh1Zm5wcmFwa2dzdnh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMDE2MzAsImV4cCI6MjA3ODc3NzYzMH0.CFxmP1S8829joB6txKQ4bypp-Qr7SDHAg0P2Dgpti1k';
-        const N8N_PROCESS_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/processar-xml';
+        const N8N_QUEUE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/receber-xml';
         const N8N_DELETE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/excluir-registro-relatorio-cte';
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -512,10 +511,9 @@
             `;
         }
 
-        // --- NOVA FUNÇÃO: CALCULAR E ATUALIZAR KPIs ---
+        // --- FUNÇÃO PARA CALCULAR E ATUALIZAR KPIs ---
         function updateKpis(data) {
-            if (!data || data.length === 0) {
-                // Reseta os KPIs para o estado inicial se não houver dados
+             if (!data || data.length === 0) {
                 document.getElementById('kpi-custo-total').textContent = 'R$ 0,00';
                 document.getElementById('kpi-perc-frete').textContent = '0,00%';
                 document.getElementById('kpi-custo-ton').textContent = 'R$ 0,00';
@@ -528,9 +526,9 @@
             }
 
             const totals = data.reduce((acc, item) => {
-                acc.custoTotal += item.custo_frete_total || 0;
-                acc.valorTotalNota += item.valor_total_nota || 0;
-                acc.pesoTotalTon += (item.peso_bruto_kg || 0) / 1000;
+                acc.custoTotal += item.custo_frete || 0;
+                acc.valorTotalNota += item.valor_nota || 0;
+                acc.pesoTotalTon += item.peso_ton || 0;
                 if ((item.qtd_ctes || 0) === 0) {
                     acc.ctesPendentes += 1;
                 }
@@ -541,11 +539,11 @@
             const custoMedioPorTon = totals.pesoTotalTon > 0 ? totals.custoTotal / totals.pesoTotalTon : 0;
 
             document.getElementById('kpi-custo-total').textContent = totals.custoTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            document.getElementById('kpi-perc-frete').textContent = `${percentualFreteMedio.toFixed(2)}%`;
+            document.getElementById('kpi-perc-frete').textContent = `${percentualFreteMedio.toFixed(2).replace('.',',')}%`;
             document.getElementById('kpi-custo-ton').textContent = custoMedioPorTon.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             document.getElementById('kpi-nfes-processadas').textContent = data.length;
-            document.getElementById('kpi-taxas-extras').textContent = 'R$ 0,00'; // Mantido como solicitado
-            document.getElementById('kpi-peso-total').textContent = totals.pesoTotalTon.toFixed(3);
+            document.getElementById('kpi-taxas-extras').textContent = 'R$ 0,00';
+            document.getElementById('kpi-peso-total').textContent = totals.pesoTotalTon.toFixed(3).replace('.',',');
             document.getElementById('kpi-valor-notas').textContent = totals.valorTotalNota.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             document.getElementById('kpi-ctes-pendentes').textContent = totals.ctesPendentes;
         }
@@ -557,12 +555,15 @@
             if (endDate) query = query.lte('data_emissao_nfe', endDate);
 
             const { data, error } = await query;
-            if (error) { console.error('Erro ao buscar dados consolidados:', error); return; }
+            if (error) { 
+                console.error('Erro ao buscar dados consolidados:', error);
+                showToast('Erro ao buscar dados consolidados.', 'error');
+                return; 
+            }
 
-            // **NOVO**: Chama a função de atualização dos KPIs com os dados buscados
             updateKpis(data);
 
-            if (data.length === 0) {
+            if (!data || data.length === 0) {
                 renderEmptyState(consolidatedTableBody, "Nenhum dado encontrado", "Tente ajustar os filtros ou importe novos arquivos XML.");
                 return;
             }
@@ -570,18 +571,17 @@
             consolidatedTableBody.innerHTML = '';
             data.forEach(item => {
                 const tr = document.createElement('tr');
-                const pesoEmTon = (item.peso_bruto_kg || 0) / 1000;
                 tr.innerHTML = `
                     <td>${new Date(item.data_emissao_nfe).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>
                     <td>${item.chave_nfe.substring(0, 20)}...</td>
-                    <td>${item.nome_destinatario || 'N/A'}</td>
+                    <td>${item.cliente_destinatario || 'N/A'}</td>
                     <td>${item.uf_destino || '--'}</td>
-                    <td>${(item.valor_total_nota || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                    <td>${pesoEmTon.toFixed(3)}</td>
-                    <td>${(item.custo_frete_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                    <td>${(item.percentual_frete_nota || 0).toFixed(2)}%</td>
+                    <td>${(item.valor_nota || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td>${(item.peso_ton || 0).toFixed(3).replace('.',',')}</td>
+                    <td>${(item.custo_frete || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td>${(item.percentual_frete_nota || 0).toFixed(2).replace('.',',')}%</td>
                     <td>${(item.custo_por_ton || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                    <td>${item.qtd_ctes}</td>
+                    <td>${item.qtd_ctes || 0}</td>
                     <td>
                         <button class="action-btn" title="Visualizar XML Principal" onclick="window.viewDetails('${item.link_xml_principal}')">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -612,7 +612,11 @@
 
             const [{data: ctes, error: ctesError}, {data: nfes, error: nfesError}] = await Promise.all([ctesQuery, nfesQuery]);
 
-            if (ctesError || nfesError) { console.error('Erro ao buscar dados brutos:', ctesError || nfesError); return; }
+            if (ctesError || nfesError) { 
+                console.error('Erro ao buscar dados brutos:', ctesError || nfesError); 
+                showToast('Erro ao buscar dados brutos.', 'error');
+                return; 
+            }
 
             const combinedData = [
                 ...ctes.map(d => ({ ...d, type: 'CT-e', key: d.chave_acesso_propria, value: d.valor_servico, link: d.link_xml, transportadora: d.nome_transportadora, tipo_servico: d.tipo_servico_cte })),
@@ -653,8 +657,8 @@
         applyFilterBtn.addEventListener('click', () => {
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
-            if (!startDate || !endDate) {
-                showToast('Por favor, selecione as datas de início e fim.', 'warning');
+             if (startDate && !endDate || !startDate && endDate) {
+                showToast('Por favor, selecione as datas de início e fim, ou limpe ambas.', 'warning');
                 return;
             }
             applyFilterBtn.classList.add('filter-applied');
@@ -669,6 +673,7 @@
             endDateInput.value = '';
             fetchAndRenderConsolidatedData();
             fetchAndRenderRawData();
+            showToast('Filtros limpos. Exibindo todos os dados.', 'success');
         });
 
         // --- LÓGICA DE UPLOAD ---
@@ -688,7 +693,6 @@
             if (files.length === 0) return;
             dropZone.classList.add('processing');
             showToast(`Enviando ${files.length} arquivo(s) para a fila...`, 'success');
-            const N8N_QUEUE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/receber-xml';
 
             try {
                 const uploadPromises = Array.from(files).map(async (file) => {
@@ -719,7 +723,7 @@
                 try {
                     const response = await fetch(N8N_DELETE_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chave_nfe_para_excluir: chave_nfe }) });
                     if (!response.ok) throw new Error('Falha na resposta do servidor.');
-                    showToast('Registro marcado para exclusão.', 'success');
+                    showToast('Registro marcado para exclusão. Os dados serão atualizados em breve.', 'success');
                 } catch (error) {
                     console.error('Erro ao chamar webhook de exclusão:', error);
                     showToast('Ocorreu um erro ao excluir o registro.', 'error');
@@ -770,13 +774,11 @@
 
         function filterTable(tbody, searchTerm) {
             const term = searchTerm.toLowerCase();
-            let found = false;
             Array.from(tbody.querySelectorAll('tr')).forEach(row => {
                 if (row.querySelector('.empty-state-container')) return;
                 const rowText = row.textContent.toLowerCase();
                 const isVisible = rowText.includes(term);
                 row.style.display = isVisible ? '' : 'none';
-                if(isVisible) found = true;
             });
         }
 
@@ -796,10 +798,12 @@
                 let aText = a.querySelector(`td:nth-child(${columnIndex + 1})`).textContent.trim();
                 let bText = b.querySelector(`td:nth-child(${columnIndex + 1})`).textContent.trim();
                 
-                const aNum = parseFloat(aText.replace(/[^0-9,-]+/g, '').replace(',', '.'));
-                const bNum = parseFloat(bText.replace(/[^0-9,-]+/g, '').replace(',', '.'));
+                const aNum = parseFloat(aText.replace('R$', '').replace(/\./g, '').replace(',', '.').trim());
+                const bNum = parseFloat(bText.replace('R$', '').replace(/\./g, '').replace(',', '.').trim());
 
-                if (!isNaN(aNum) && !isNaN(bNum)) return currentIsAscending ? bNum - aNum : aNum - bNum;
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return currentIsAscending ? bNum - aNum : aNum - bNum;
+                }
                 
                 if (aText.match(/^\d{2}\/\d{2}\/\d{4}/)) {
                     const aDate = new Date(aText.split('/').reverse().join('-'));
@@ -834,28 +838,41 @@
             fetchAndRenderConsolidatedData();
             fetchAndRenderRawData();
 
-            // **REALTIME SUBSCRIPTION** - Escuta todas as mudanças nas tabelas relevantes
+            // **REALTIME SUBSCRIPTION**
             supabase
                 .channel('public-db-changes')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'relatorio_consolidado' }, 
-                    () => {
-                        console.log('Realtime change detected on relatorio_consolidado. Refetching...');
-                        fetchAndRenderConsolidatedData()
+                .on('postgres_changes', 
+                    { event: '*', schema: 'public', table: 'relatorio_consolidado' }, 
+                    (payload) => {
+                        console.log('Realtime change detected on relatorio_consolidado:', payload);
+                        showToast('Relatório consolidado atualizado!', 'success');
+                        fetchAndRenderConsolidatedData();
                     }
                 )
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'ctes_processados' }, 
-                    () => {
-                        console.log('Realtime change detected on ctes_processados. Refetching...');
-                        fetchAndRenderRawData() 
+                .on('postgres_changes', 
+                    { event: '*', schema: 'public', table: 'ctes_processados' }, 
+                    (payload) => {
+                        console.log('Realtime change detected on ctes_processados:', payload);
+                        fetchAndRenderRawData();
                     }
                 )
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'nfes_processadas' }, 
-                    () => {
-                        console.log('Realtime change detected on nfes_processadas. Refetching...');
-                        fetchAndRenderRawData()
+                .on('postgres_changes', 
+                    { event: '*', schema: 'public', table: 'nfes_processadas' }, 
+                    (payload) => {
+                        console.log('Realtime change detected on nfes_processadas:', payload);
+                        fetchAndRenderRawData();
                     }
                 )
-                .subscribe();
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        console.log('Conectado ao canal Realtime do Supabase!');
+                    } else if (status === 'TIMED_OUT') {
+                        showToast('Conexão realtime expirou. Recarregue a página.', 'warning');
+                    } else {
+                        console.error(`Status do canal Realtime: ${status}`);
+                        showToast(`Erro na conexão realtime: ${status}`, 'error');
+                    }
+                });
         }
 
         initialize();
