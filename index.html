@@ -173,7 +173,7 @@
             background-color: transparent;
             border: 1px solid var(--border-color);
             color: var(--text-secondary);
-            width: 40px; /* Ajustado para corresponder à altura dos outros botões */
+            width: 40px; 
             height: 40px;
             padding: 0;
             display: inline-flex;
@@ -318,6 +318,36 @@
             color: var(--text-color);
             box-sizing: border-box;
             font-size: 16px;
+        }
+
+        /* --- Segmented Control for Raw Data Filter --- */
+        .segment-control {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            background-color: var(--header-bg);
+            padding: 6px;
+            border-radius: 8px;
+            width: fit-content;
+        }
+        .segment-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            background-color: transparent;
+            color: var(--text-secondary);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .segment-btn:hover {
+            color: var(--text-color);
+        }
+        .segment-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         
         /* --- Theme Switch --- */
@@ -485,7 +515,12 @@
         </div>
 
         <div id="raw-data-view" class="view-content">
-             <input type="text" id="search-raw" class="search-input" placeholder="🔍 Buscar em Dados Processados...">
+            <div class="segment-control" id="raw-data-filter">
+                <button class="segment-btn active" data-type="all">Todos</button>
+                <button class="segment-btn" data-type="NF-e">NF-e</button>
+                <button class="segment-btn" data-type="CT-e">CT-e</button>
+            </div>
+            <input type="text" id="search-raw" class="search-input" placeholder="🔍 Buscar em Dados Processados...">
             <div class="data-table-container">
                 <div class="table-scroll-wrapper">
                     <table>
@@ -529,11 +564,13 @@
             };
         }
 
-        // --- ELEMENTOS DO DOM ---
+        // --- STATE MANAGEMENT & DOM ELEMENTS ---
         const consolidatedTableBody = document.getElementById('consolidated-table-body');
         const rawDataTableBody = document.getElementById('raw-data-table-body');
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
+        let rawDataSource = []; // Armazena o conjunto de dados brutos completo para filtragem do lado do cliente
+        let currentRawDataFilter = 'all'; // Estado do filtro de dados brutos ('all', 'NF-e', 'CT-e')
         
         // --- FUNÇÃO PARA RENDERIZAR "EMPTY STATE" ---
         function renderEmptyState(tbody, message, subMessage) {
@@ -615,7 +652,7 @@
                 tr.innerHTML = `
                     <td>${new Date(item.data_emissao_nfe).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>
                     <td>${item.chave_nfe.substring(0, 20)}...</td>
-                    <td>${item.cliente_destinatario || 'N/A'}</td>
+                    <td>${item.cliente_destinatario || '--'}</td>
                     <td>${item.uf_destino || '--'}</td>
                     <td>${(item.valor_nota || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
                     <td>${(item.peso_ton || 0).toFixed(3).replace('.',',')}</td>
@@ -659,25 +696,40 @@
                 return; 
             }
 
-            const combinedData = [
+            rawDataSource = [
                 ...ctes.map(d => ({ ...d, type: 'CT-e', key: d.chave_acesso_propria, value: d.valor_servico, link: d.link_xml, transportadora: d.nome_transportadora, tipo_servico: d.tipo_servico_cte })),
                 ...nfes.map(d => ({ ...d, type: 'NF-e', key: d.chave_acesso_propria, value: d.valor_total_nota, link: d.link_xml, transportadora: d.nome_transportadora || '--', tipo_servico: '--' }))
             ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            
+            renderRawDataTable(); // Renderiza a tabela com os dados recém-buscados
+        }
 
-            if (combinedData.length === 0) {
-                renderEmptyState(rawDataTableBody, "Nenhum documento processado", "Importe arquivos XML para visualizar os dados brutos aqui.");
+        function renderRawDataTable() {
+            const filteredData = rawDataSource.filter(item => {
+                if (currentRawDataFilter === 'all') return true;
+                return item.type === currentRawDataFilter;
+            });
+
+            if (filteredData.length === 0) {
+                const message = rawDataSource.length === 0 
+                    ? "Nenhum documento processado" 
+                    : `Nenhum documento do tipo ${currentRawDataFilter} encontrado`;
+                const subMessage = rawDataSource.length === 0
+                    ? "Importe arquivos XML para visualizar os dados brutos aqui."
+                    : "Tente selecionar outro tipo de filtro ou importe novos arquivos.";
+                renderEmptyState(rawDataTableBody, message, subMessage);
                 return;
             }
 
             rawDataTableBody.innerHTML = '';
-            combinedData.forEach(item => {
+            filteredData.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${new Date(item.created_at).toLocaleString('pt-BR')}</td>
                     <td><span class="tag">${item.type}</span></td>
                     <td>${item.key.substring(0, 20)}...</td>
-                    <td>${item.transportadora || 'N/A'}</td>
-                    <td>${item.tipo_servico || 'N/A'}</td>
+                    <td>${item.transportadora || '--'}</td>
+                    <td>${item.tipo_servico || '--'}</td>
                     <td>${(item.value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
                     <td>
                         <button class="action-btn" title="Visualizar XML" onclick="window.viewDetails('${item.link}')">
@@ -708,7 +760,6 @@
                 console.error("Erro ao atualizar o dashboard:", error);
                 showToast("Ocorreu um erro ao atualizar os dados.", "error");
             } finally {
-                // Adiciona um pequeno delay para a animação ser percebida
                 setTimeout(() => {
                     refreshIcon.classList.remove('spinning');
                 }, 500);
@@ -729,13 +780,13 @@
             }
             applyFilterBtn.classList.add('filter-applied');
             setTimeout(() => applyFilterBtn.classList.remove('filter-applied'), 400);
-            refreshDashboard(); // Chama a função central
+            refreshDashboard();
         });
 
         clearFilterBtn.addEventListener('click', () => {
             document.getElementById('start-date').value = '';
             document.getElementById('end-date').value = '';
-            refreshDashboard(); // Chama a função central
+            refreshDashboard();
             showToast('Filtros limpos. Exibindo todos os dados.', 'success');
         });
 
@@ -744,7 +795,6 @@
 
         // --- LÓGICA DE UPLOAD ---
         const uploadLink = document.getElementById('upload-link');
-
         uploadLink.addEventListener('click', (e) => { e.preventDefault(); fileInput.click(); });
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
         dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('drag-over'); });
@@ -825,16 +875,31 @@
             }, 3000);
         }
         
-        // --- LÓGICA DE BUSCA E ORDENAÇÃO ---
-        function setupSearchAndSort() {
+        // --- LÓGICA DE BUSCA, ORDENAÇÃO E FILTRO DE DADOS BRUTOS ---
+        function setupInteractiveElements() {
+            // Busca
             document.getElementById('search-consolidated').addEventListener('keyup', (e) => filterTable(consolidatedTableBody, e.target.value));
             document.getElementById('search-raw').addEventListener('keyup', (e) => filterTable(rawDataTableBody, e.target.value));
+            
+            // Ordenação
             document.querySelectorAll('th.sortable').forEach((headerCell) => {
                 headerCell.addEventListener('click', () => {
                     const table = headerCell.closest('table');
                     const columnIndex = Array.from(headerCell.parentNode.children).indexOf(headerCell);
                     sortTableByColumn(table, columnIndex);
                 });
+            });
+
+            // Filtro de Tipo (Dados Brutos)
+            const filterContainer = document.getElementById('raw-data-filter');
+            filterContainer.addEventListener('click', (e) => {
+                const targetButton = e.target.closest('.segment-btn');
+                if (targetButton) {
+                    filterContainer.querySelector('.active').classList.remove('active');
+                    targetButton.classList.add('active');
+                    currentRawDataFilter = targetButton.dataset.type;
+                    renderRawDataTable();
+                }
             });
         }
 
@@ -900,31 +965,19 @@
             });
 
             setupTabs();
-            setupSearchAndSort();
+            setupInteractiveElements();
             refreshDashboard(); // Carga inicial dos dados
 
             // **REALTIME SUBSCRIPTION OTIMIZADA**
             supabase
                 .channel('public-db-changes')
                 .on('postgres_changes', 
-                    { event: '*', schema: 'public', table: 'relatorio_consolidado' }, 
+                    { event: '*', schema: 'public' }, 
                     (payload) => {
                         console.log('Realtime change detected:', payload);
-                        showToast('Dados atualizados em tempo real!', 'success');
-                        debouncedRefresh();
-                    }
-                )
-                 .on('postgres_changes', 
-                    { event: '*', schema: 'public', table: 'ctes_processados' }, 
-                    (payload) => {
-                        console.log('Realtime change detected:', payload);
-                        debouncedRefresh();
-                    }
-                )
-                .on('postgres_changes', 
-                    { event: '*', schema: 'public', table: 'nfes_processadas' }, 
-                    (payload) => {
-                        console.log('Realtime change detected:', payload);
+                        if(payload.table === 'relatorio_consolidado') {
+                           showToast('Relatório consolidado atualizado!', 'success');
+                        }
                         debouncedRefresh();
                     }
                 )
