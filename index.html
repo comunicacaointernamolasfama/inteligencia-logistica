@@ -168,6 +168,36 @@
         #apply-filter-btn.filter-applied { animation: pulse-success 0.4s ease-out; }
         @keyframes pulse-success { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
 
+        /* --- Botão de Atualização Manual --- */
+        .refresh-btn {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            width: 40px; /* Ajustado para corresponder à altura dos outros botões */
+            height: 40px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        .refresh-btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background-color: var(--hover-bg);
+        }
+        
+        /* --- Animação de Rotação --- */
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        .spinning {
+            animation: spin 1s linear infinite;
+        }
+
+
         /* --- Abas de Visualização --- */
         .view-tabs { margin-bottom: 24px; border-bottom: 1px solid var(--border-color); }
         .tab-button {
@@ -313,7 +343,6 @@
             border-color: var(--primary-color) transparent var(--primary-color) transparent;
             animation: spin 1s linear infinite;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* --- Toast Notifications --- */
         .toast-container {
@@ -418,6 +447,9 @@
             </div>
             <button id="apply-filter-btn">Aplicar Filtro</button>
             <button id="clear-filter-btn">Limpar / Atualizar</button>
+            <button id="manual-refresh-btn" class="refresh-btn" title="Atualizar Dados Agora">
+                <i class="fas fa-sync-alt" id="refresh-icon"></i>
+            </button>
         </div>
 
         <div class="view-tabs">
@@ -488,6 +520,15 @@
         const N8N_DELETE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/excluir-registro-relatorio-cte';
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // --- FUNÇÃO DEBOUNCE ---
+        function debounce(func, timeout = 2000){
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => { func.apply(this, args); }, timeout);
+            };
+        }
+
         // --- ELEMENTOS DO DOM ---
         const consolidatedTableBody = document.getElementById('consolidated-table-body');
         const rawDataTableBody = document.getElementById('raw-data-table-body');
@@ -542,7 +583,7 @@
             document.getElementById('kpi-perc-frete').textContent = `${percentualFreteMedio.toFixed(2).replace('.',',')}%`;
             document.getElementById('kpi-custo-ton').textContent = custoMedioPorTon.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             document.getElementById('kpi-nfes-processadas').textContent = data.length;
-            document.getElementById('kpi-taxas-extras').textContent = 'R$ 0,00';
+            document.getElementById('kpi-taxas-extras').textContent = 'R$ 0,00'; // Lógica a ser implementada
             document.getElementById('kpi-peso-total').textContent = totals.pesoTotalTon.toFixed(3).replace('.',',');
             document.getElementById('kpi-valor-notas').textContent = totals.valorTotalNota.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             document.getElementById('kpi-ctes-pendentes').textContent = totals.ctesPendentes;
@@ -648,33 +689,58 @@
             });
         }
         
-        // --- LÓGICA DE FILTROS ---
-        const startDateInput = document.getElementById('start-date');
-        const endDateInput = document.getElementById('end-date');
+        // --- FUNÇÃO CENTRAL DE ATUALIZAÇÃO ---
+        const refreshIcon = document.getElementById('refresh-icon');
+        const debouncedRefresh = debounce(refreshDashboard, 2000);
+        
+        async function refreshDashboard() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+
+            refreshIcon.classList.add('spinning');
+
+            try {
+                await Promise.all([
+                    fetchAndRenderConsolidatedData(startDate, endDate),
+                    fetchAndRenderRawData(startDate, endDate)
+                ]);
+            } catch (error) {
+                console.error("Erro ao atualizar o dashboard:", error);
+                showToast("Ocorreu um erro ao atualizar os dados.", "error");
+            } finally {
+                // Adiciona um pequeno delay para a animação ser percebida
+                setTimeout(() => {
+                    refreshIcon.classList.remove('spinning');
+                }, 500);
+            }
+        }
+        
+        // --- LÓGICA DE FILTROS E ATUALIZAÇÃO MANUAL ---
         const applyFilterBtn = document.getElementById('apply-filter-btn');
         const clearFilterBtn = document.getElementById('clear-filter-btn');
+        const manualRefreshBtn = document.getElementById('manual-refresh-btn');
 
         applyFilterBtn.addEventListener('click', () => {
-            const startDate = startDateInput.value;
-            const endDate = endDateInput.value;
+             const startDate = document.getElementById('start-date').value;
+             const endDate = document.getElementById('end-date').value;
              if (startDate && !endDate || !startDate && endDate) {
                 showToast('Por favor, selecione as datas de início e fim, ou limpe ambas.', 'warning');
                 return;
             }
             applyFilterBtn.classList.add('filter-applied');
             setTimeout(() => applyFilterBtn.classList.remove('filter-applied'), 400);
-
-            fetchAndRenderConsolidatedData(startDate, endDate);
-            fetchAndRenderRawData(startDate, endDate);
+            refreshDashboard(); // Chama a função central
         });
 
         clearFilterBtn.addEventListener('click', () => {
-            startDateInput.value = '';
-            endDateInput.value = '';
-            fetchAndRenderConsolidatedData();
-            fetchAndRenderRawData();
+            document.getElementById('start-date').value = '';
+            document.getElementById('end-date').value = '';
+            refreshDashboard(); // Chama a função central
             showToast('Filtros limpos. Exibindo todos os dados.', 'success');
         });
+
+        manualRefreshBtn.addEventListener('click', refreshDashboard);
+
 
         // --- LÓGICA DE UPLOAD ---
         const uploadLink = document.getElementById('upload-link');
@@ -835,32 +901,31 @@
 
             setupTabs();
             setupSearchAndSort();
-            fetchAndRenderConsolidatedData();
-            fetchAndRenderRawData();
+            refreshDashboard(); // Carga inicial dos dados
 
-            // **REALTIME SUBSCRIPTION**
+            // **REALTIME SUBSCRIPTION OTIMIZADA**
             supabase
                 .channel('public-db-changes')
                 .on('postgres_changes', 
                     { event: '*', schema: 'public', table: 'relatorio_consolidado' }, 
                     (payload) => {
-                        console.log('Realtime change detected on relatorio_consolidado:', payload);
-                        showToast('Relatório consolidado atualizado!', 'success');
-                        fetchAndRenderConsolidatedData();
+                        console.log('Realtime change detected:', payload);
+                        showToast('Dados atualizados em tempo real!', 'success');
+                        debouncedRefresh();
                     }
                 )
-                .on('postgres_changes', 
+                 .on('postgres_changes', 
                     { event: '*', schema: 'public', table: 'ctes_processados' }, 
                     (payload) => {
-                        console.log('Realtime change detected on ctes_processados:', payload);
-                        fetchAndRenderRawData();
+                        console.log('Realtime change detected:', payload);
+                        debouncedRefresh();
                     }
                 )
                 .on('postgres_changes', 
                     { event: '*', schema: 'public', table: 'nfes_processadas' }, 
                     (payload) => {
-                        console.log('Realtime change detected on nfes_processadas:', payload);
-                        fetchAndRenderRawData();
+                        console.log('Realtime change detected:', payload);
+                        debouncedRefresh();
                     }
                 )
                 .subscribe((status) => {
