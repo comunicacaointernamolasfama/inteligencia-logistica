@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Análise de Fretes - FAMA</title>
+    <title>Dashboard de Inteligência Logística - FAMA</title>
     <style>
         :root {
             --bg-color: #FFFFFF;
@@ -14,11 +14,11 @@
             --header-text: #FFFFFF;
             --border-color: #e5e7eb;
             --highlight-color: #ef4444; /* Vermelho FAMA */
-            --primary-color: #ef4444; /* Usado para ações principais */
+            --primary-color: #ef4444; 
             --hover-bg: rgba(239, 68, 68, 0.05);
             --success-color: #10b981;
             --warning-color: #f59e0b;
-            /* CORREÇÃO: Variável para o fundo do controle segmentado no tema claro */
+            --info-color: #3b82f6;
             --segment-control-bg: #e5e7eb; 
         }
 
@@ -31,7 +31,6 @@
             --header-text: #f9fafb;
             --border-color: #374151;
             --hover-bg: rgba(239, 68, 68, 0.1);
-            /* CORREÇÃO: Variável para o fundo do controle segmentado no tema escuro */
             --segment-control-bg: #374151;
         }
 
@@ -44,7 +43,7 @@
         }
 
         .container {
-            max-width: 1600px; /* Aumentado para acomodar novas colunas */
+            max-width: 1800px;
             margin: 0 auto;
             padding: 32px;
         }
@@ -82,11 +81,10 @@
         .upload-area.drag-over i { animation: bounce 0.6s ease-in-out infinite; }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
-
-        /* --- KPI Grid (Modernizado) --- */
+        /* --- KPI Grid --- */
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 24px;
             margin-bottom: 40px;
         }
@@ -100,34 +98,14 @@
             overflow: hidden;
         }
         .kpi-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 3px;
-            background: var(--primary-color);
-            opacity: 0.8;
+            content: ''; position: absolute; top: 0; left: 0; right: 0;
+            height: 3px; background: var(--primary-color); opacity: 0.8;
         }
-        .kpi-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-        }
-        body.dark-theme .kpi-card:hover { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); }
         .kpi-card h3 {
-            margin: 0 0 8px 0;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            letter-spacing: 0.02em;
-            text-transform: uppercase;
+            margin: 0 0 8px 0; font-size: 13px; font-weight: 500; color: var(--text-secondary);
+            display: flex; align-items: center; gap: 8px; letter-spacing: 0.02em; text-transform: uppercase;
         }
-        .kpi-card .value {
-            font-size: 32px;
-            font-weight: 700;
-            line-height: 1.2;
-        }
+        .kpi-card .value { font-size: 28px; font-weight: 700; line-height: 1.2; }
         .kpi-card .value.highlight { color: var(--primary-color); }
 
         /* --- Barra de Filtros --- */
@@ -143,277 +121,78 @@
             flex-wrap: wrap;
         }
         .filter-group { display: flex; align-items: center; gap: 8px; }
-        .filter-bar label { font-weight: 500; font-size: 14px; color: var(--text-secondary); }
-        .filter-bar input[type="date"],
-        .filter-bar input[type="text"],
-        .filter-bar select {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 8px 12px;
-            font-size: 14px;
+        .filter-bar label { font-weight: 500; font-size: 12px; color: var(--text-secondary); text-transform: uppercase; white-space: nowrap; }
+        .filter-bar input, .filter-bar select {
+            background-color: var(--bg-color); color: var(--text-color);
+            border: 1px solid var(--border-color); border-radius: 6px;
+            padding: 8px 12px; font-size: 14px;
         }
-        .filter-bar input[type="text"]#cfop-filter {
-            width: 80px; /* Smaller width for CFOP */
-        }
-        .filter-bar button {
-            padding: 10px 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-        #apply-filter-btn { background-color: var(--primary-color); color: white; }
-        #apply-filter-btn:hover { opacity: 0.9; }
-        #clear-filter-btn {
-            background-color: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-secondary);
-        }
-        #clear-filter-btn:hover { background-color: var(--hover-bg); border-color: var(--primary-color); }
-        #apply-filter-btn.filter-applied { animation: pulse-success 0.4s ease-out; }
-        @keyframes pulse-success { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
 
-        /* --- Botão de Atualização Manual --- */
-        .refresh-btn {
-            background-color: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-secondary);
-            width: 40px; 
-            height: 40px;
-            padding: 0;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            margin-left: auto; /* Push to the right */
+        /* --- Botões --- */
+        .btn {
+            padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer;
+            font-weight: 600; font-size: 14px; transition: all 0.2s;
         }
-        .refresh-btn:hover {
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-            background-color: var(--hover-bg);
-        }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
+        .btn-outline:hover { border-color: var(--primary-color); color: var(--primary-color); background-color: var(--hover-bg); }
         
-        /* --- Animação de Rotação --- */
-        @keyframes spin {
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-        .spinning {
-            animation: spin 1s linear infinite;
-        }
+        .refresh-btn { width: 42px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 16px; margin-left: auto; }
+        .spinning { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
 
+        /* --- Badges --- */
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .badge-venda { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .badge-compra { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+        .badge-devolucao { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+        .badge-outros { background: rgba(107, 114, 128, 0.1); color: #6b7280; }
 
-        /* --- Abas de Visualização --- */
+        /* --- Abas --- */
         .view-tabs { margin-bottom: 24px; border-bottom: 1px solid var(--border-color); }
         .tab-button {
-            padding: 12px 24px;
-            border: none;
-            border-bottom: 3px solid transparent;
-            background-color: transparent;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 500;
-            margin-bottom: -1px;
-            transition: all 0.3s;
+            padding: 12px 24px; border: none; border-bottom: 3px solid transparent;
+            background-color: transparent; color: var(--text-secondary); cursor: pointer;
+            font-size: 16px; font-weight: 500; transition: all 0.3s;
         }
-        .tab-button.active {
-            font-weight: 600;
-            color: var(--text-color);
-            border-bottom-color: var(--primary-color);
-        }
+        .tab-button.active { font-weight: 600; color: var(--text-color); border-bottom-color: var(--primary-color); }
         .view-content { display: none; }
         .view-content.active { display: block; animation: fadeIn 0.4s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- Tabela Enterprise-Grade --- */
-        .data-table-container {
-            background: var(--card-bg);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            overflow: hidden;
-        }
-        .table-scroll-wrapper { max-height: 60vh; overflow-y: auto; overflow-x: auto; }
+        /* --- Tabela --- */
+        .data-table-container { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; }
+        .table-scroll-wrapper { max-height: 60vh; overflow: auto; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 16px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--border-color); }
-        thead {
-            position: sticky; top: 0; z-index: 10;
-            background: var(--card-bg);
-            box-shadow: 0 1px 0 var(--border-color);
-        }
-        th {
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-secondary);
-        }
-        th.sortable { 
-            cursor: pointer; 
-            position: relative; 
-            padding-right: 30px; 
-        }
-        th.sortable::after {
-            content: '\2195'; opacity: 0.3; position: absolute;
-            right: 10px; transition: opacity 0.2s;
-        }
+        thead { position: sticky; top: 0; z-index: 10; background: var(--card-bg); box-shadow: 0 1px 0 var(--border-color); }
+        th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); }
+        th.sortable { cursor: pointer; position: relative; padding-right: 30px; }
+        th.sortable::after { content: '\2195'; opacity: 0.3; position: absolute; right: 10px; transition: opacity 0.2s; }
         th.sortable:hover::after { opacity: 1; }
         tbody tr { transition: background-color 0.15s ease; }
         tbody tr:hover { background-color: var(--hover-bg); }
-        tbody tr:nth-child(even) { background-color: rgba(0,0,0,0.02); }
-        body.dark-theme tbody tr:nth-child(even) { background-color: rgba(255,255,255,0.02); }
-        tbody tr:last-child td { border-bottom: none; }
 
-        /* --- Componentes da Tabela --- */
-        .action-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 32px; height: 32px;
-            background: transparent;
-            border: 1px solid transparent;
-            border-radius: 6px;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .action-btn:hover {
-            background: var(--hover-bg);
-            color: var(--primary-color);
-        }
-        .action-btn svg { width: 16px; height: 16px; }
-        .tag { font-size: 12px; background-color: var(--header-bg); color: var(--header-text); padding: 4px 8px; border-radius: 6px; }
-        
-        /* --- Empty State --- */
-        td.empty-state-container {
-            text-align: center;
-        }
-        .empty-state-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 80px 20px;
-        }
-        .empty-state-container svg {
-            width: 80px; height: 80px;
-            color: var(--border-color);
-            margin-bottom: 16px;
-        }
-        .empty-state-container h3 {
-            margin: 0 0 8px;
-            font-size: 18px;
-            font-weight: 600;
-        }
-        .empty-state-container p {
-            color: var(--text-secondary);
-            margin: 0;
-            max-width: 400px;
-        }
+        /* --- Segment Control --- */
+        .segment-control { display: flex; gap: 8px; margin-bottom: 16px; background-color: var(--segment-control-bg); padding: 6px; border-radius: 8px; width: fit-content; }
+        .segment-btn { padding: 8px 16px; border: none; border-radius: 6px; background-color: transparent; color: var(--text-secondary); font-weight: 500; cursor: pointer; }
+        .segment-btn.active { background-color: var(--primary-color); color: white; font-weight: 600; }
 
-        /* --- Busca e Ordenação --- */
-        .search-input {
-            width: 100%;
-            max-width: 500px;
-            padding: 12px 16px;
-            margin-bottom: 16px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background-color: var(--card-bg);
-            color: var(--text-color);
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-
-        /* --- Segmented Control for Raw Data Filter --- */
-        .segment-control {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-            /* CORREÇÃO: Utilizando a nova variável de tema */
-            background-color: var(--segment-control-bg);
-            padding: 6px;
-            border-radius: 8px;
-            width: fit-content;
-        }
-        .segment-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            background-color: transparent;
-            color: var(--text-secondary);
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-        }
-        .segment-btn:hover {
-            color: var(--text-color);
-        }
-        .segment-btn.active {
-            background-color: var(--primary-color);
-            color: white;
-            font-weight: 600;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        /* --- Theme Switch --- */
-        .theme-switch-wrapper { display: flex; align-items: center; }
-        .theme-switch { display: inline-block; height: 34px; position: relative; width: 60px; }
-        .theme-switch input { display:none; }
-        .slider { background-color: #ccc; bottom: 0; cursor: pointer; left: 0; position: absolute; right: 0; top: 0; transition: .4s; border-radius: 34px; }
-        .slider:before { background-color: #fff; bottom: 4px; content: ""; height: 26px; left: 4px; position: absolute; transition: .4s; width: 26px; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--primary-color); }
-        input:checked + .slider:before { transform: translateX(26px); }
-        .theme-switch-wrapper span { margin-left: 10px; }
-        
-        /* --- Estilo de Carregamento --- */
+        /* --- Toast & Loader --- */
         .processing { position: relative; color: transparent !important; pointer-events: none; }
-        .processing p, .processing i { color: transparent !important; }
         .processing::after {
-            content: ''; display: block; position: absolute;
-            left: 50%; top: 50%;
-            width: 32px; height: 32px;
-            margin: -16px 0 0 -16px;
-            border-radius: 50%;
-            border: 3px solid var(--primary-color);
+            content: ''; display: block; position: absolute; left: 50%; top: 50%;
+            width: 32px; height: 32px; margin: -16px 0 0 -16px;
+            border-radius: 50%; border: 3px solid var(--primary-color);
             border-color: var(--primary-color) transparent var(--primary-color) transparent;
             animation: spin 1s linear infinite;
         }
+        .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; }
+        .toast { min-width: 300px; padding: 16px 20px; background: var(--card-bg); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); border-left: 4px solid var(--primary-color); animation: slideInRight 0.3s forwards; }
+        @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
 
-        /* --- Toast Notifications --- */
-        .toast-container {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .toast {
-            min-width: 320px;
-            padding: 16px 20px;
-            background: var(--card-bg);
-            border-radius: 8px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-            border-left: 4px solid;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            animation: slideInRight 0.4s ease-out forwards;
-        }
-        .toast.hiding { animation: slideOutRight 0.4s ease-in forwards; }
-        .toast.success { border-left-color: var(--success-color); }
-        .toast.error { border-left-color: var(--primary-color); }
-        .toast.warning { border-left-color: var(--warning-color); }
-        @keyframes slideInRight { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes slideOutRight { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
-
+        .empty-state-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 20px; text-align: center; }
+        .empty-state-container svg { width: 64px; height: 64px; color: var(--border-color); margin-bottom: 16px; }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -424,119 +203,85 @@
         <header>
             <div class="logo-container">
                 <img id="logo-img" src="https://ctfamadobrasil.com.br/wp-content/uploads/2025/12/Gemini_Generated_Image_v8cib8v8cib8v8ci-removebg-preview.png" alt="Logo Fama" class="logo">
-                <h1>Dashboard de Análise de Fretes</h1>
+                <h1>Auditoria Logística FAMA</h1>
             </div>
             <div class="theme-switch-wrapper">
-                <label class="theme-switch" for="checkbox">
-                    <input type="checkbox" id="checkbox" checked/>
-                    <div class="slider round"></div>
-                </label>
-                <span id="theme-label">Tema Escuro</span>
+                <button class="btn btn-outline" id="theme-toggle">Alternar Tema</button>
             </div>
         </header>
 
         <div class="upload-area" id="drop-zone">
             <i class="fas fa-upload"></i>
-            <p>Arraste e solte os arquivos XML aqui ou <a href="#" id="upload-link">clique para selecionar</a></p>
-            <p><small>Apenas arquivos XML são suportados</small></p>
+            <p>Arraste arquivos XML aqui ou <a href="#" id="upload-link">clique para selecionar</a></p>
             <input type="file" id="file-input" multiple accept=".xml" style="display: none;">
         </div>
         
         <div class="kpi-grid">
-            <div class="kpi-card">
-                <h3><i class="fas fa-dollar-sign"></i> CUSTO TOTAL (MÊS)</h3>
-                <div id="kpi-custo-total" class="value">R$ 0,00</div>
-            </div>
-            <div class="kpi-card">
-                <h3><i class="fas fa-file-invoice-dollar"></i> % FRETE S/ NOTA (MÉDIA)</h3>
-                <div id="kpi-perc-frete" class="value highlight">0,00%</div>
-            </div>
-            <div class="kpi-card">
-                <h3><i class="fas fa-weight-hanging"></i> CUSTO MÉDIO / TON</h3>
-                <div id="kpi-custo-ton" class="value">R$ 0,00</div>
-            </div>
-            <div class="kpi-card">
-                <h3><i class="fas fa-file-alt"></i> NF-ES PROCESSADAS (MÊS)</h3>
-                <div id="kpi-nfes-processadas" class="value">0</div>
-            </div>
-            <div class="kpi-card">
-                <h3><i class="fas fa-exclamation-triangle"></i> CUSTO TAXAS EXTRAS</h3>
-                <div id="kpi-taxas-extras" class="value highlight">R$ 0,00</div>
-            </div>
-            <div class="kpi-card">
-                <h3><i class="fas fa-truck-loading"></i> PESO TOTAL (TON)</h3>
-                <div id="kpi-peso-total" class="value">0,00</div>
-            </div>
-            <div class="kpi-card">
-                <h3><i class="fas fa-archive"></i> VALOR TOTAL DAS NOTAS</h3>
-                <div id="kpi-valor-notas" class="value">R$ 0,00</div>
-            </div>
-            <div class="kpi-card">
-                <h3><i class="fas fa-hourglass-half"></i> CT-ES PENDENTES</h3>
-                <div id="kpi-ctes-pendentes" class="value">0</div>
-            </div>
+            <div class="kpi-card"><h3><i class="fas fa-dollar-sign"></i> Custo Total</h3><div id="kpi-custo-total" class="value">R$ 0,00</div></div>
+            <div class="kpi-card"><h3><i class="fas fa-file-invoice-dollar"></i> % Frete/Nota</h3><div id="kpi-perc-frete" class="value highlight">0,00%</div></div>
+            <div class="kpi-card"><h3><i class="fas fa-exclamation-triangle"></i> Taxas Extras</h3><div id="kpi-taxas-extras" class="value highlight">R$ 0,00</div></div>
+            <div class="kpi-card"><h3><i class="fas fa-weight-hanging"></i> Custo Médio / Ton</h3><div id="kpi-custo-ton" class="value">R$ 0,00</div></div>
+            <div class="kpi-card"><h3><i class="fas fa-boxes"></i> Volumes Totais</h3><div id="kpi-total-volumes" class="value">0</div></div>
+            <div class="kpi-card"><h3><i class="fas fa-truck-loading"></i> Peso Total (Ton)</h3><div id="kpi-peso-total" class="value">0,000</div></div>
+            <div class="kpi-card"><h3><i class="fas fa-file-alt"></i> NF-es</h3><div id="kpi-nfes-total" class="value">0</div></div>
+            <div class="kpi-card"><h3><i class="fas fa-hourglass-half"></i> CT-es Pendentes</h3><div id="kpi-ctes-pendentes" class="value">0</div></div>
         </div>
 
         <div class="filter-bar">
+            <div class="filter-group"><label>Início</label><input type="date" id="start-date"></div>
+            <div class="filter-group"><label>Fim</label><input type="date" id="end-date"></div>
             <div class="filter-group">
-                <label for="start-date">De:</label>
-                <input type="date" id="start-date">
-            </div>
-            <div class="filter-group">
-                <label for="end-date">Até:</label>
-                <input type="date" id="end-date">
-            </div>
-            <div class="filter-group">
-                <label for="category-filter">Operação:</label>
+                <label>Operação</label>
                 <select id="category-filter">
                     <option value="">Todas</option>
                     <option value="Venda">Venda</option>
-                    <option value="Compra">Compra</option>
-                    <option value="Devolução">Devolução</option>
+                    <option value="Compra/MP">Compra/MP</option>
+                    <option value="Devolução/Garantia">Devolução/Garantia</option>
+                    <option value="Transferência">Transferência</option>
+                    <option value="Outros">Outros</option>
                 </select>
             </div>
-            <div class="filter-group">
-                <label for="cfop-filter">CFOP:</label>
-                <input type="text" id="cfop-filter" placeholder="Ex: 5102">
-            </div>
-            <button id="apply-filter-btn">Aplicar Filtro</button>
-            <button id="clear-filter-btn">Limpar / Atualizar</button>
-            <button id="manual-refresh-btn" class="refresh-btn" title="Atualizar Dados Agora">
-                <i class="fas fa-sync-alt" id="refresh-icon"></i>
-            </button>
+            <div class="filter-group"><label>Transportadora</label><select id="carrier-filter"><option value="">Todas</option></select></div>
+            <div class="filter-group"><label>Cliente</label><select id="client-filter"><option value="">Todos</option></select></div>
+            <div class="filter-group"><label>CFOP</label><input type="text" id="cfop-filter" placeholder="Ex: 5405"></div>
+            
+            <button class="btn btn-primary" id="apply-filters">Filtrar</button>
+            <button class="btn btn-outline" id="clear-filters">Limpar</button>
+            <button class="btn btn-outline" id="export-csv">Exportar</button>
+            <button class="btn btn-outline refresh-btn" id="manual-refresh"><i class="fas fa-sync-alt" id="refresh-icon"></i></button>
         </div>
 
         <div class="view-tabs">
-            <button class="tab-button active" data-view="consolidated-view">Relatório Consolidado</button>
+            <button class="tab-button active" data-view="consolidated-view">Relatório de Auditoria</button>
             <button class="tab-button" data-view="raw-data-view">Dados Processados (Brutos)</button>
         </div>
 
         <div id="consolidated-view" class="view-content active">
-            <input type="text" id="search-consolidated" class="search-input" placeholder="🔍 Buscar no Relatório Consolidado...">
+            <input type="text" id="search-consolidated" class="search-input" placeholder="🔍 Buscar na tabela...">
             <div class="data-table-container">
                 <div class="table-scroll-wrapper">
-                    <table>
+                    <table id="main-table">
                         <thead>
                             <tr>
                                 <th class="sortable">DATA EMISSÃO</th>
-                                <th class="sortable">CHAVE NF-E</th>
-                                <th class="sortable">CLIENTE (DESTINATÁRIO)</th>
-                                <th class="sortable">UF</th>
                                 <th class="sortable">OPERAÇÃO</th>
                                 <th class="sortable">CFOP</th>
+                                <th class="sortable">CLIENTE (DESTINATÁRIO)</th>
+                                <th class="sortable">UF</th>
+                                <th class="sortable">TRANSPORTADORA</th>
                                 <th class="sortable">VOLUMES</th>
                                 <th class="sortable">ESPÉCIE</th>
-                                <th class="sortable">VALOR NOTA</th>
                                 <th class="sortable">PESO (TON)</th>
+                                <th class="sortable">VALOR NOTA</th>
                                 <th class="sortable">CUSTO FRETE</th>
-                                <th class="sortable">% FRETE/NOTA</th>
+                                <th class="sortable">AGEND. (R$)</th>
+                                <th class="sortable">REENT. (R$)</th>
+                                <th class="sortable">% FRETE</th>
                                 <th class="sortable">CUSTO/TON</th>
-                                <th class="sortable">QTD. CTES</th>
                                 <th>AÇÕES</th>
                             </tr>
                         </thead>
-                        <tbody id="consolidated-table-body">
-                            </tbody>
+                        <tbody id="consolidated-table-body"></tbody>
                     </table>
                 </div>
             </div>
@@ -548,10 +293,10 @@
                 <button class="segment-btn" data-type="NF-e">NF-e</button>
                 <button class="segment-btn" data-type="CT-e">CT-e</button>
             </div>
-            <input type="text" id="search-raw" class="search-input" placeholder="🔍 Buscar em Dados Processados...">
+            <input type="text" id="search-raw" class="search-input" placeholder="🔍 Buscar dados brutos...">
             <div class="data-table-container">
                 <div class="table-scroll-wrapper">
-                    <table>
+                    <table id="raw-table">
                         <thead>
                             <tr>
                                 <th class="sortable">DATA PROC.</th>
@@ -563,8 +308,7 @@
                                 <th>AÇÕES</th>
                             </tr>
                         </thead>
-                        <tbody id="raw-data-table-body">
-                            </tbody>
+                        <tbody id="raw-data-table-body"></tbody>
                     </table>
                 </div>
             </div>
@@ -578,462 +322,326 @@
 
         // --- CONFIGURAÇÃO ---
         const SUPABASE_URL = 'https://pdqkvyxufnprapkgsvxx.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkcWt2eXh1Zm5wcmFwa2dzdnh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMDE2MzAsImV4cCI6MjA3ODc3NzYzMH0.CFxmP1S8829joB6txKQ4bypp-Qr7SDHAg0P2Dgpti1k';
-        const N8N_QUEUE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/receber-xml';
-        const N8N_DELETE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/excluir-registro-relatorio-cte';
-        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // --- FUNÇÃO DEBOUNCE ---
-        function debounce(func, timeout = 2000){
-            let timer;
-            return (...args) => {
-                clearTimeout(timer);
-                timer = setTimeout(() => { func.apply(this, args); }, timeout);
-            };
-        }
-
-        // --- STATE MANAGEMENT & DOM ELEMENTS ---
-        const consolidatedTableBody = document.getElementById('consolidated-table-body');
-        const rawDataTableBody = document.getElementById('raw-data-table-body');
-        const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('file-input');
-        let rawDataSource = []; // Armazena o conjunto de dados brutos completo para filtragem do lado do cliente
-        let currentRawDataFilter = 'all'; // Estado do filtro de dados brutos ('all', 'NF-e', 'CT-e')
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkcWt2eXh1Zm5wcmFwa2dzdnh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMDE2MzAsImV4cCI6MjA3ODc3NzYzMH0.CFxmP1S8829joB6txKQ4bypp-Qr7SDHAg0P2Dgpti1k';
+        const n8n_webhook = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/receber-xml';
+        const n8n_delete = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/excluir-registro-relatorio-cte';
         
-        // --- FUNÇÃO PARA RENDERIZAR "EMPTY STATE" ---
-        function renderEmptyState(tbody, message, subMessage) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="100%" class="empty-state-container">
-                        <div>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                               <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125V6.375c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v.001c0 .621.504 1.125 1.125 1.125z" />
-                            </svg>
-                            <h3>${message}</h3>
-                            <p>${subMessage}</p>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        }
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // --- FUNÇÃO PARA CALCULAR E ATUALIZAR KPIs ---
-        function updateKpis(data) {
-             if (!data || data.length === 0) {
-                document.getElementById('kpi-custo-total').textContent = 'R$ 0,00';
-                document.getElementById('kpi-perc-frete').textContent = '0,00%';
-                document.getElementById('kpi-custo-ton').textContent = 'R$ 0,00';
-                document.getElementById('kpi-nfes-processadas').textContent = '0';
-                document.getElementById('kpi-taxas-extras').textContent = 'R$ 0,00';
-                document.getElementById('kpi-peso-total').textContent = '0,00';
-                document.getElementById('kpi-valor-notas').textContent = 'R$ 0,00';
-                document.getElementById('kpi-ctes-pendentes').textContent = '0';
-                return;
-            }
+        let fullData = [];
+        let rawDataSource = [];
+        let currentRawType = 'all';
 
-            const totals = data.reduce((acc, item) => {
-                acc.custoTotal += item.custo_frete || 0;
-                acc.valorTotalNota += item.valor_nota || 0;
-                acc.pesoTotalTon += item.peso_ton || 0;
-                acc.custoTaxasExtras += (item.valor_agendamento || 0) + (item.valor_reentrega || 0);
-                if ((item.qtd_ctes || 0) === 0) {
-                    acc.ctesPendentes += 1;
-                }
-                return acc;
-            }, { custoTotal: 0, valorTotalNota: 0, pesoTotalTon: 0, ctesPendentes: 0, custoTaxasExtras: 0 });
-
-            const percentualFreteMedio = totals.valorTotalNota > 0 ? (totals.custoTotal / totals.valorTotalNota) * 100 : 0;
-            const custoMedioPorTon = totals.pesoTotalTon > 0 ? totals.custoTotal / totals.pesoTotalTon : 0;
-
-            document.getElementById('kpi-custo-total').textContent = totals.custoTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            document.getElementById('kpi-perc-frete').textContent = `${percentualFreteMedio.toFixed(2).replace('.',',')}%`;
-            document.getElementById('kpi-custo-ton').textContent = custoMedioPorTon.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            document.getElementById('kpi-nfes-processadas').textContent = data.length;
-            document.getElementById('kpi-taxas-extras').textContent = totals.custoTaxasExtras.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            document.getElementById('kpi-peso-total').textContent = totals.pesoTotalTon.toFixed(3).replace('.',',');
-            document.getElementById('kpi-valor-notas').textContent = totals.valorTotalNota.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            document.getElementById('kpi-ctes-pendentes').textContent = totals.ctesPendentes;
-        }
-        
-        // --- LÓGICA DE DADOS ---
-        async function fetchAndRenderConsolidatedData(filters) {
-            let query = supabase.from('relatorio_consolidado').select('*').eq('ignorado', false).order('data_emissao_nfe', { ascending: false });
-            
-            if (filters.startDate) query = query.gte('data_emissao_nfe', filters.startDate);
-            if (filters.endDate) query = query.lte('data_emissao_nfe', filters.endDate);
-            if (filters.category) query = query.eq('categoria_frete', filters.category);
-            if (filters.cfop) query = query.like('cfop_original', `%${filters.cfop}%`);
-
-            const { data, error } = await query;
-            if (error) { 
-                console.error('Erro ao buscar dados consolidados:', error);
-                showToast('Erro ao buscar dados consolidados.', 'error');
-                return; 
-            }
-
-            updateKpis(data);
-
-            if (!data || data.length === 0) {
-                renderEmptyState(consolidatedTableBody, "Nenhum dado encontrado", "Tente ajustar os filtros ou importe novos arquivos XML.");
-                return;
-            }
-            
-            consolidatedTableBody.innerHTML = '';
-            data.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${new Date(item.data_emissao_nfe).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>
-                    <td>${item.chave_nfe.substring(0, 20)}...</td>
-                    <td>${item.cliente_destinatario || '--'}</td>
-                    <td>${item.uf_destino || '--'}</td>
-                    <td>${item.categoria_frete || '--'}</td>
-                    <td>${item.cfop_original || '--'}</td>
-                    <td>${item.quantidade_volumes || '--'}</td>
-                    <td>${item.especie || '--'}</td>
-                    <td>${(item.valor_nota || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                    <td>${(item.peso_ton || 0).toFixed(3).replace('.',',')}</td>
-                    <td>${(item.custo_frete || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                    <td>${(item.percentual_frete_nota || 0).toFixed(2).replace('.',',')}%</td>
-                    <td>${(item.custo_por_ton || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                    <td>${item.qtd_ctes || 0}</td>
-                    <td>
-                        <button class="action-btn" title="Visualizar XML Principal" onclick="window.viewDetails('${item.link_xml_principal}')">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                        </button>
-                        <button class="action-btn" title="Excluir do Relatório" onclick="window.deleteRecord('${item.chave_nfe}')">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.124-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.077-2.09.921-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
-                        </button>
-                    </td>
-                `;
-                consolidatedTableBody.appendChild(tr);
-            });
-        }
-        
-        async function fetchAndRenderRawData(startDate, endDate) {
-            let ctesQuery = supabase.from('ctes_processados').select('*').order('created_at', { ascending: false });
-            let nfesQuery = supabase.from('nfes_processadas').select('*').order('created_at', { ascending: false });
-
-            if (startDate) {
-                ctesQuery = ctesQuery.gte('created_at', startDate);
-                nfesQuery = nfesQuery.gte('created_at', startDate);
-            }
-            if (endDate) {
-                let endOfDay = new Date(endDate);
-                endOfDay.setHours(23, 59, 59, 999);
-                ctesQuery = ctesQuery.lte('created_at', endOfDay.toISOString());
-                nfesQuery = nfesQuery.lte('created_at', endOfDay.toISOString());
-            }
-
-            const [{data: ctes, error: ctesError}, {data: nfes, error: nfesError}] = await Promise.all([ctesQuery, nfesQuery]);
-
-            if (ctesError || nfesError) { 
-                console.error('Erro ao buscar dados brutos:', ctesError || nfesError); 
-                showToast('Erro ao buscar dados brutos.', 'error');
-                return; 
-            }
-
-            rawDataSource = [
-                ...ctes.map(d => ({ ...d, type: 'CT-e', key: d.chave_acesso_propria, value: d.valor_servico, link: d.link_xml, transportadora: d.nome_transportadora, tipo_servico: d.tipo_servico_cte })),
-                ...nfes.map(d => ({ ...d, type: 'NF-e', key: d.chave_acesso_propria, value: d.valor_total_nota, link: d.link_xml, transportadora: d.nome_transportadora || '--', tipo_servico: '--' }))
-            ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-            
-            renderRawDataTable();
-        }
-
-        function renderRawDataTable() {
-            const filteredData = rawDataSource.filter(item => {
-                if (currentRawDataFilter === 'all') return true;
-                return item.type === currentRawDataFilter;
-            });
-
-            if (filteredData.length === 0) {
-                const message = rawDataSource.length === 0 
-                    ? "Nenhum documento processado" 
-                    : `Nenhum documento do tipo ${currentRawDataFilter} encontrado`;
-                const subMessage = rawDataSource.length === 0
-                    ? "Importe arquivos XML para visualizar os dados brutos aqui."
-                    : "Tente selecionar outro tipo de filtro ou importe novos arquivos.";
-                renderEmptyState(rawDataTableBody, message, subMessage);
-                return;
-            }
-
-            rawDataTableBody.innerHTML = '';
-            filteredData.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${new Date(item.created_at).toLocaleString('pt-BR')}</td>
-                    <td><span class="tag">${item.type}</span></td>
-                    <td>${item.key.substring(0, 20)}...</td>
-                    <td>${item.transportadora || '--'}</td>
-                    <td>${item.tipo_servico || '--'}</td>
-                    <td>${(item.value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                    <td>
-                        <button class="action-btn" title="Visualizar XML" onclick="window.viewDetails('${item.link}')">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                        </button>
-                    </td>
-                `;
-                rawDataTableBody.appendChild(tr);
-            });
-        }
-        
-        // --- FUNÇÃO CENTRAL DE ATUALIZAÇÃO ---
-        const debouncedRefresh = debounce(refreshDashboard, 2000);
-        
-        async function refreshDashboard() {
-            const refreshIcon = document.getElementById('refresh-icon');
-            refreshIcon.classList.add('spinning');
-
-            const filters = {
-                startDate: document.getElementById('start-date').value,
-                endDate: document.getElementById('end-date').value,
-                category: document.getElementById('category-filter').value,
-                cfop: document.getElementById('cfop-filter').value.trim()
-            };
-            
-            try {
-                await Promise.all([
-                    fetchAndRenderConsolidatedData(filters),
-                    fetchAndRenderRawData(filters.startDate, filters.endDate)
-                ]);
-            } catch (error) {
-                console.error("Erro ao atualizar o dashboard:", error);
-                showToast("Ocorreu um erro ao atualizar os dados.", "error");
-            } finally {
-                setTimeout(() => {
-                    refreshIcon.classList.remove('spinning');
-                }, 500);
-            }
-        }
-        
-        // --- LÓGICA DE FILTROS E ATUALIZAÇÃO MANUAL ---
-        const applyFilterBtn = document.getElementById('apply-filter-btn');
-        const clearFilterBtn = document.getElementById('clear-filter-btn');
-        const manualRefreshBtn = document.getElementById('manual-refresh-btn');
-
-        applyFilterBtn.addEventListener('click', () => {
-             const startDate = document.getElementById('start-date').value;
-             const endDate = document.getElementById('end-date').value;
-             if (startDate && !endDate || !startDate && endDate) {
-                showToast('Por favor, selecione as datas de início e fim, ou limpe ambas.', 'warning');
-                return;
-            }
-            applyFilterBtn.classList.add('filter-applied');
-            setTimeout(() => applyFilterBtn.classList.remove('filter-applied'), 400);
-            refreshDashboard();
-        });
-
-        clearFilterBtn.addEventListener('click', () => {
-            document.getElementById('start-date').value = '';
-            document.getElementById('end-date').value = '';
-            document.getElementById('category-filter').value = '';
-            document.getElementById('cfop-filter').value = '';
-            refreshDashboard();
-            showToast('Filtros limpos. Exibindo todos os dados.', 'success');
-        });
-
-        manualRefreshBtn.addEventListener('click', refreshDashboard);
-
-
-        // --- LÓGICA DE UPLOAD ---
-        const uploadLink = document.getElementById('upload-link');
-        uploadLink.addEventListener('click', (e) => { e.preventDefault(); fileInput.click(); });
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('drag-over'); });
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('drag-over');
-            handleFileUpload(e.dataTransfer.files);
-        });
-        fileInput.addEventListener('change', () => { handleFileUpload(fileInput.files); });
-
-        async function handleFileUpload(files) {
-            if (files.length === 0) return;
-            dropZone.classList.add('processing');
-            showToast(`Enviando ${files.length} arquivo(s) para a fila...`, 'success');
-
-            try {
-                const uploadPromises = Array.from(files).map(async (file) => {
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    const response = await fetch(N8N_QUEUE_WEBHOOK, { method: 'POST', body: formData });
-                    if (!response.ok) throw new Error(`Falha ao enviar o arquivo ${file.name} para a fila.`);
-                });
-                await Promise.all(uploadPromises);
-                showToast(`Todos os ${files.length} arquivos foram adicionados à fila de processamento.`, 'success');
-            } catch (error)
-        {
-                console.error(`Falha no processo de envio:`, error);
-                showToast(error.message || 'Ocorreu um erro ao enviar os arquivos.', 'error');
-            } finally {
-                dropZone.classList.remove('processing');
-                fileInput.value = '';
-            }
-        }
-        
-        // --- FUNÇÕES GLOBAIS (Ações, Abas, Notificações) ---
-        window.viewDetails = function(link) {
-            if (link) window.open(link, '_blank');
-            else showToast('Nenhum link de XML associado.', 'warning');
-        }
-
-        window.deleteRecord = async function(chave_nfe) {
-            if (confirm(`Tem certeza que deseja remover a NF-e ${chave_nfe.substring(0,10)}... do relatório?`)) {
-                try {
-                    const response = await fetch(N8N_DELETE_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chave_nfe_para_excluir: chave_nfe }) });
-                    if (!response.ok) throw new Error('Falha na resposta do servidor.');
-                    showToast('Registro marcado para exclusão. Os dados serão atualizados em breve.', 'success');
-                } catch (error) {
-                    console.error('Erro ao chamar webhook de exclusão:', error);
-                    showToast('Ocorreu um erro ao excluir o registro.', 'error');
-                }
-            }
-        }
-
-        function setupTabs() {
-            const tabButtons = document.querySelectorAll('.tab-button');
-            const viewContents = document.querySelectorAll('.view-content');
-            tabButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
-                    button.classList.add('active');
-                    const viewId = button.getAttribute('data-view');
-                    viewContents.forEach(content => {
-                        content.classList.remove('active');
-                        if(content.id === viewId) content.classList.add('active');
-                    });
-                });
-            });
-        }
-        
-        function showToast(message, type = 'success') {
+        // --- INTERFACE UTILS ---
+        function showToast(msg, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
-            toast.textContent = message;
+            toast.textContent = msg;
             container.appendChild(toast);
-            setTimeout(() => {
-                toast.classList.add('hiding');
-                toast.addEventListener('animationend', () => toast.remove());
-            }, 3000);
-        }
-        
-        // --- LÓGICA DE BUSCA, ORDENAÇÃO E FILTRO DE DADOS BRUTOS ---
-        function setupInteractiveElements() {
-            document.getElementById('search-consolidated').addEventListener('keyup', (e) => filterTable(consolidatedTableBody, e.target.value));
-            document.getElementById('search-raw').addEventListener('keyup', (e) => filterTable(rawDataTableBody, e.target.value));
-            
-            document.querySelectorAll('th.sortable').forEach((headerCell) => {
-                headerCell.addEventListener('click', () => {
-                    const table = headerCell.closest('table');
-                    const columnIndex = Array.from(headerCell.parentNode.children).indexOf(headerCell);
-                    sortTableByColumn(table, columnIndex);
-                });
-            });
-
-            const filterContainer = document.getElementById('raw-data-filter');
-            filterContainer.addEventListener('click', (e) => {
-                const targetButton = e.target.closest('.segment-btn');
-                if (targetButton) {
-                    filterContainer.querySelector('.active').classList.remove('active');
-                    targetButton.classList.add('active');
-                    currentRawDataFilter = targetButton.dataset.type;
-                    renderRawDataTable();
-                }
-            });
+            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 3500);
         }
 
-        function filterTable(tbody, searchTerm) {
-            const term = searchTerm.toLowerCase();
-            Array.from(tbody.querySelectorAll('tr')).forEach(row => {
-                if (row.querySelector('.empty-state-container')) return;
-                const rowText = row.textContent.toLowerCase();
-                const isVisible = rowText.includes(term);
-                row.style.display = isVisible ? '' : 'none';
-            });
+        const fmtCur = (v) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const fmtNum = (v, d = 2) => (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+        function debounce(func, timeout = 2000) {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => func.apply(this, args), timeout);
+            };
         }
 
-        function sortTableByColumn(table, columnIndex) {
-            const tbody = table.tBodies[0];
-            const headerCell = table.tHead.querySelectorAll('th')[columnIndex];
-            if (!headerCell.classList.contains('sortable')) return;
-            
-            const currentIsAscending = headerCell.dataset.sortDirection !== 'desc';
-            const direction = currentIsAscending ? 'desc' : 'asc';
-            headerCell.dataset.sortDirection = direction;
+        // --- DATA LOGIC ---
+        async function fetchData() {
+            const filters = {
+                start: document.getElementById('start-date').value,
+                end: document.getElementById('end-date').value,
+                cat: document.getElementById('category-filter').value,
+                carrier: document.getElementById('carrier-filter').value,
+                client: document.getElementById('client-filter').value,
+                cfop: document.getElementById('cfop-filter').value
+            };
 
-            const rows = Array.from(tbody.querySelectorAll('tr'));
-            if(rows.length <= 1) return;
-            
-            rows.sort((a, b) => {
-                let aText = a.querySelector(`td:nth-child(${columnIndex + 1})`).textContent.trim();
-                let bText = b.querySelector(`td:nth-child(${columnIndex + 1})`).textContent.trim();
-                
-                const aNum = parseFloat(aText.replace('R$', '').replace(/\./g, '').replace(',', '.').trim());
-                const bNum = parseFloat(bText.replace('R$', '').replace(/\./g, '').replace(',', '.').trim());
+            let query = supabase.from('relatorio_consolidado').select('*').eq('ignorado', false).order('data_emissao_nfe', { ascending: false });
 
-                if (!isNaN(aNum) && !isNaN(bNum)) {
-                    return currentIsAscending ? bNum - aNum : aNum - bNum;
-                }
-                
-                if (aText.match(/^\d{2}\/\d{2}\/\d{4}/)) {
-                    const aDate = new Date(aText.split('/').reverse().join('-'));
-                    const bDate = new Date(bText.split('/').reverse().join('-'));
-                    return currentIsAscending ? bDate - aDate : aDate - bDate;
-                }
-                
-                return aText.localeCompare(bText, undefined, { numeric: true }) * (currentIsAscending ? -1 : 1);
-            });
+            if (filters.start) query = query.gte('data_emissao_nfe', filters.start);
+            if (filters.end) query = query.lte('data_emissao_nfe', filters.end);
+            if (filters.cat) query = query.eq('categoria_frete', filters.cat);
+            if (filters.carrier) query = query.eq('nome_transportadora', filters.carrier);
+            if (filters.client) query = query.eq('cliente_destinatario', filters.client);
+            if (filters.cfop) query = query.ilike('cfop_original', `%${filters.cfop}%`);
+
+            const { data, error } = await query;
+            if (error) { showToast('Erro ao carregar dados', 'error'); return; }
+            fullData = data;
             
+            renderConsolidated();
+            updateKPIs(data);
+            populateDynamicFilters(data);
+        }
+
+        function updateKPIs(data) {
+            const totals = data.reduce((acc, row) => {
+                acc.frete += row.custo_frete || 0;
+                acc.nota += row.valor_nota || 0;
+                acc.taxas += (row.valor_agendamento || 0) + (row.valor_reentrega || 0);
+                acc.peso += row.peso_ton || 0;
+                acc.volumes += row.quantidade_volumes || 0;
+                acc.nfes += 1;
+                if ((row.qtd_ctes || 0) === 0) acc.pendentes += 1;
+                return acc;
+            }, { frete: 0, nota: 0, taxas: 0, peso: 0, volumes: 0, nfes: 0, pendentes: 0 });
+
+            document.getElementById('kpi-custo-total').textContent = fmtCur(totals.frete);
+            document.getElementById('kpi-perc-frete').textContent = (totals.nota > 0 ? (totals.frete / totals.nota * 100) : 0).toFixed(2) + '%';
+            document.getElementById('kpi-taxas-extras').textContent = fmtCur(totals.taxas);
+            document.getElementById('kpi-custo-ton').textContent = fmtCur(totals.peso > 0 ? totals.frete / totals.peso : 0);
+            document.getElementById('kpi-total-volumes').textContent = totals.volumes.toLocaleString('pt-BR');
+            document.getElementById('kpi-peso-total').textContent = totals.peso.toFixed(3);
+            document.getElementById('kpi-nfes-total').textContent = totals.nfes;
+            document.getElementById('kpi-ctes-pendentes').textContent = totals.pendentes;
+        }
+
+        function renderConsolidated() {
+            const tbody = document.getElementById('consolidated-table-body');
             tbody.innerHTML = '';
-            tbody.append(...rows);
-        }
-        
-        // --- INICIALIZAÇÃO ---
-        function initialize() {
-            const themeToggle = document.getElementById('checkbox');
-            const themeLabel = document.getElementById('theme-label');
-            const logoImg = document.getElementById('logo-img');
-            const logoClaro = 'https://ctfamadobrasil.com.br/wp-content/uploads/2025/09/logo.png';
-            const logoEscuro = 'https://ctfamadobrasil.com.br/wp-content/uploads/2025/12/Gemini_Generated_Image_v8cib8v8cib8v8ci-removebg-preview.png';
 
-            themeToggle.addEventListener('change', () => {
+            if (fullData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="16" style="text-align:center; padding: 60px;">Nenhum dado encontrado.</td></tr>';
+                return;
+            }
+
+            fullData.forEach(row => {
+                const tr = document.createElement('tr');
+                const cat = (row.categoria_frete || 'Outros').toLowerCase();
+                const badgeClass = cat.includes('venda') ? 'badge-venda' : 
+                                   cat.includes('compra') ? 'badge-compra' : 
+                                   cat.includes('devol') ? 'badge-devolucao' : 'badge-outros';
+                
+                tr.innerHTML = `
+                    <td>${new Date(row.data_emissao_nfe).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>
+                    <td><span class="badge ${badgeClass}">${row.categoria_frete || 'Outros'}</span></td>
+                    <td>${row.cfop_original || '--'}</td>
+                    <td title="${row.cliente_destinatario}">${row.cliente_destinatario?.substring(0,25)}...</td>
+                    <td>${row.uf_destino || '--'}</td>
+                    <td>${row.nome_transportadora || '--'}</td>
+                    <td>${row.quantidade_volumes || 0}</td>
+                    <td>${row.especie || '--'}</td>
+                    <td>${(row.peso_ton || 0).toFixed(3)}</td>
+                    <td>${fmtCur(row.valor_nota)}</td>
+                    <td style="font-weight:600">${fmtCur(row.custo_frete)}</td>
+                    <td style="color:var(--primary-color)">${row.valor_agendamento > 0 ? fmtCur(row.valor_agendamento) : '--'}</td>
+                    <td style="color:var(--primary-color)">${row.valor_reentrega > 0 ? fmtCur(row.valor_reentrega) : '--'}</td>
+                    <td>${(row.percentual_frete_nota || 0).toFixed(2)}%</td>
+                    <td>${fmtCur(row.custo_por_ton)}</td>
+                    <td>
+                        <button class="action-btn" title="Ver XML" onclick="window.open('${row.link_xml_principal}')"><i class="fas fa-eye"></i></button>
+                        <button class="action-btn" title="Excluir" onclick="window.deleteEntry('${row.chave_nfe}')"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function fetchRawData() {
+            const [{data: nfes}, {data: ctes}] = await Promise.all([
+                supabase.from('nfes_processadas').select('*').limit(200).order('created_at', { ascending: false }),
+                supabase.from('ctes_processados').select('*').limit(200).order('created_at', { ascending: false })
+            ]);
+            
+            rawDataSource = [
+                ...(nfes || []).map(d => ({ ...d, type: 'NF-e', val: d.valor_total_nota, key: d.chave_acesso_propria, carrier: d.nome_transportadora })),
+                ...(ctes || []).map(d => ({ ...d, type: 'CT-e', val: d.valor_servico, key: d.chave_acesso_propria, carrier: d.nome_transportadora }))
+            ].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+            
+            renderRaw();
+        }
+
+        function renderRaw() {
+            const tbody = document.getElementById('raw-data-table-body');
+            tbody.innerHTML = '';
+            const filtered = rawDataSource.filter(d => currentRawType === 'all' || d.type === currentRawType);
+            
+            filtered.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${new Date(row.created_at).toLocaleString('pt-BR')}</td>
+                    <td><span class="tag">${row.type}</span></td>
+                    <td title="${row.key}">${row.key.substring(0,25)}...</td>
+                    <td>${row.carrier || '--'}</td>
+                    <td>${row.tipo_servico || '--'}</td>
+                    <td>${fmtCur(row.val)}</td>
+                    <td><button class="action-btn" onclick="window.open('${row.link_xml}')"><i class="fas fa-file-code"></i></button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function populateDynamicFilters(data) {
+            const carrierSelect = document.getElementById('carrier-filter');
+            const clientSelect = document.getElementById('client-filter');
+            const curCarrier = carrierSelect.value;
+            const curClient = clientSelect.value;
+
+            const carriers = [...new Set(data.map(d => d.nome_transportadora).filter(Boolean))].sort();
+            const clients = [...new Set(data.map(d => d.cliente_destinatario).filter(Boolean))].sort();
+
+            carrierSelect.innerHTML = '<option value="">Todas</option>';
+            carriers.forEach(c => carrierSelect.innerHTML += `<option value="${c}" ${c === curCarrier ? 'selected' : ''}>${c}</option>`);
+
+            clientSelect.innerHTML = '<option value="">Todos</option>';
+            clients.forEach(c => clientSelect.innerHTML += `<option value="${c}" ${c === curClient ? 'selected' : ''}>${c}</option>`);
+        }
+
+        // --- ORDENAÇÃO E BUSCA (LÓGICA ORIGINAL) ---
+        function setupSorting() {
+            document.querySelectorAll('th.sortable').forEach(th => {
+                th.onclick = () => {
+                    const table = th.closest('table');
+                    const tbody = table.querySelector('tbody');
+                    const index = Array.from(th.parentNode.children).indexOf(th);
+                    const asc = th.dataset.order !== 'asc';
+                    
+                    th.dataset.order = asc ? 'asc' : 'desc';
+                    const rows = Array.from(tbody.querySelectorAll('tr'));
+                    
+                    rows.sort((a, b) => {
+                        let tA = a.children[index].textContent.trim();
+                        let tB = b.children[index].textContent.trim();
+                        
+                        const nA = parseFloat(tA.replace(/[R$\.%]/g, '').replace(',', '.'));
+                        const nB = parseFloat(tB.replace(/[R$\.%]/g, '').replace(',', '.'));
+
+                        if (!isNaN(nA) && !isNaN(nB)) return asc ? nA - nB : nB - nA;
+                        if (tA.includes('/')) {
+                            const dA = new Date(tA.split('/').reverse().join('-'));
+                            const dB = new Date(tB.split('/').reverse().join('-'));
+                            return asc ? dA - dB : dB - dA;
+                        }
+                        return asc ? tA.localeCompare(tB) : tB.localeCompare(tA);
+                    });
+
+                    tbody.innerHTML = '';
+                    rows.forEach(r => tbody.appendChild(r));
+                };
+            });
+        }
+
+        function filterTable(tbody, term) {
+            const lowerTerm = term.toLowerCase();
+            Array.from(tbody.querySelectorAll('tr')).forEach(tr => {
+                tr.style.display = tr.innerText.toLowerCase().includes(lowerTerm) ? '' : 'none';
+            });
+        }
+
+        // --- AÇÕES GLOBAIS ---
+        window.deleteEntry = async (chave) => {
+            if (!confirm("Deseja realmente excluir este registro?")) return;
+            try {
+                const res = await fetch(n8n_delete, { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ chave_nfe_para_excluir: chave }) 
+                });
+                if (res.ok) showToast("Registro marcado para exclusão!");
+                else throw new Error();
+            } catch (e) { showToast("Erro ao excluir", "error"); }
+        };
+
+        const refreshDashboard = async () => {
+            const icon = document.getElementById('refresh-icon');
+            icon.classList.add('spinning');
+            await Promise.all([fetchData(), fetchRawData()]);
+            setTimeout(() => icon.classList.remove('spinning'), 800);
+        };
+
+        window.refreshDashboard = refreshDashboard;
+
+        // --- EXPORTAÇÃO ---
+        function exportToCSV() {
+            if (fullData.length === 0) return;
+            let csv = "\uFEFFData Emissão,Operação,CFOP,Cliente,Volumes,Espécie,Peso Ton,Valor Nota,Custo Frete,Agendamento,Reentrega,Pedagio\n";
+            fullData.forEach(r => {
+                csv += `${r.data_emissao_nfe},${r.categoria_frete},${r.cfop_original},"${r.cliente_destinatario}",${r.quantidade_volumes},"${r.especie}",${r.peso_ton},${r.valor_nota},${r.custo_frete},${r.valor_agendamento},${r.valor_reentrega},${r.valor_pedagio}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `auditoria_fama_${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+        }
+
+        // --- UPLOAD ---
+        async function handleFileUpload(files) {
+            showToast(`Processando ${files.length} arquivo(s)...`);
+            document.getElementById('drop-zone').classList.add('processing');
+            for (let file of files) {
+                const fd = new FormData();
+                fd.append('file', file);
+                try { await fetch(n8n_webhook, { method: 'POST', body: fd }); } 
+                catch (e) { console.error(e); }
+            }
+            document.getElementById('drop-zone').classList.remove('processing');
+            showToast('Arquivos enviados com sucesso!');
+        }
+
+        // --- INICIALIZAÇÃO ---
+        function init() {
+            document.getElementById('apply-filters').onclick = refreshDashboard;
+            document.getElementById('manual-refresh').onclick = refreshDashboard;
+            document.getElementById('clear-filters').onclick = () => {
+                document.querySelectorAll('.filter-bar input, .filter-bar select').forEach(el => el.value = '');
+                refreshDashboard();
+            };
+            document.getElementById('export-csv').onclick = exportToCSV;
+            document.getElementById('theme-toggle').onclick = () => {
                 document.body.classList.toggle('dark-theme');
-                const isDarkMode = document.body.classList.contains('dark-theme');
-                themeLabel.textContent = isDarkMode ? 'Tema Escuro' : 'Tema Claro';
-                logoImg.src = isDarkMode ? logoEscuro : logoClaro;
+                const isDark = document.body.classList.contains('dark-theme');
+                document.getElementById('theme-toggle').innerHTML = isDark ? '<i class="fas fa-sun"></i> Tema Claro' : '<i class="fas fa-moon"></i> Tema Escuro';
+            };
+
+            document.getElementById('drop-zone').onclick = () => document.getElementById('file-input').click();
+            document.getElementById('file-input').onchange = (e) => handleFileUpload(e.target.files);
+            document.getElementById('drop-zone').ondragover = (e) => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); };
+            document.getElementById('drop-zone').ondragleave = (e) => { e.preventDefault(); e.currentTarget.classList.remove('drag-over'); };
+            document.getElementById('drop-zone').ondrop = (e) => { e.preventDefault(); handleFileUpload(e.dataTransfer.files); };
+
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.onclick = () => {
+                    document.querySelectorAll('.tab-button, .view-content').forEach(el => el.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById(btn.dataset.view).classList.add('active');
+                };
             });
 
-            setupTabs();
-            setupInteractiveElements();
-            refreshDashboard();
+            document.getElementById('raw-data-filter').onclick = (e) => {
+                if (e.target.classList.contains('segment-btn')) {
+                    document.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentRawType = e.target.dataset.type;
+                    renderRaw();
+                }
+            };
 
-            supabase
-                .channel('public-db-changes')
-                .on('postgres_changes', 
-                    { event: '*', schema: 'public' }, 
-                    (payload) => {
-                        const relevantTables = ['relatorio_consolidado', 'ctes_processados', 'nfes_processadas'];
-                        if (relevantTables.includes(payload.table)) {
-                            console.log('Realtime change detected in:', payload.table);
-                            showToast(`Dados atualizados em tempo real (${payload.table})!`, 'success');
-                            debouncedRefresh();
-                        }
-                    }
-                )
-                .subscribe((status) => {
-                    if (status === 'SUBSCRIBED') {
-                        console.log('Conectado ao canal Realtime do Supabase!');
-                    } else if (status === 'TIMED_OUT') {
-                        showToast('Conexão realtime expirou. Recarregue a página.', 'warning');
-                    } else {
-                        console.error(`Status do canal Realtime: ${status}`);
-                        showToast(`Erro na conexão realtime: ${status}`, 'error');
-                    }
-                });
+            document.getElementById('search-consolidated').onkeyup = (e) => filterTable(document.getElementById('consolidated-table-body'), e.target.value);
+            document.getElementById('search-raw').onkeyup = (e) => filterTable(document.getElementById('raw-data-table-body'), e.target.value);
+
+            const debouncedRefresh = debounce(refreshDashboard, 2000);
+            supabase.channel('audit-channel').on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
+                if (['relatorio_consolidado', 'ctes_processados', 'nfes_processadas'].includes(payload.table)) {
+                    showToast('Atualização automática do sistema...');
+                    debouncedRefresh();
+                }
+            }).subscribe();
+
+            setupSorting();
+            refreshDashboard();
         }
 
-        initialize();
+        init();
     </script>
 </body>
 </html>
