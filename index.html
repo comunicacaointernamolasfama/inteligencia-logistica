@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale-1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Análise de Fretes - FAMA</title>
     <!-- Integração de Bibliotecas Externas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -67,7 +67,7 @@
         }
 
         .container {
-            max-width: 1800px; /* Aumentado para acomodar novas colunas */
+            max-width: 1800px;
             margin: 0 auto;
             padding: 32px;
         }
@@ -128,7 +128,7 @@
         .upload-area.drag-over i { animation: bounce 0.6s ease-in-out infinite; }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
-        /* --- KPI Grid (Modernizado) --- */
+        /* --- KPI Grid --- */
         .kpi-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 24px; margin-bottom: 40px;
@@ -175,17 +175,18 @@
         #clear-filter-btn {
             background-color: transparent; border: 1px solid var(--border-color); color: var(--text-secondary);
         }
-        #clear-filter-btn:hover { background-color: var(--hover-bg); border-color: var(--primary-color); }
+        #clear-filter-btn:hover { background-color: var(--hover-bg); color: var(--primary-color); border-color: var(--primary-color); }
         #export-excel-btn { background-color: #107c41; color: white; }
         #export-excel-btn:hover { background-color: #0f6837; }
-        #apply-filter-btn.filter-applied { animation: pulse-success 0.4s ease-out; }
-        @keyframes pulse-success { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-
-        /* --- Animação de Rotação --- */
+        #manual-refresh-btn { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
+        #manual-refresh-btn:hover { background-color: var(--hover-bg); color: var(--primary-color); border-color: var(--primary-color); }
+        
+        /* --- Animação --- */
         @keyframes spin { 100% { transform: rotate(360deg); } }
         .spinning { animation: spin 1s linear infinite; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- Abas de Visualização --- */
+        /* --- Abas e Conteúdo --- */
         .view-tabs { margin-bottom: 24px; border-bottom: 1px solid var(--border-color); }
         .tab-button {
             padding: 12px 24px; border: none; border-bottom: 3px solid transparent;
@@ -195,9 +196,8 @@
         .tab-button.active { font-weight: 600; color: var(--text-color); border-bottom-color: var(--primary-color); }
         .view-content { display: none; }
         .view-content.active { display: block; animation: fadeIn 0.4s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- Tabela Enterprise-Grade --- */
+        /* --- Tabela --- */
         .data-table-container {
             background: var(--card-bg); border-radius: 12px;
             border: 1px solid var(--border-color); overflow: hidden;
@@ -210,7 +210,6 @@
         th.sortable { cursor: pointer; position: relative; padding-right: 30px; }
         th.sortable::after { content: '\2195'; opacity: 0.3; position: absolute; right: 10px; transition: opacity 0.2s; }
         th.sortable:hover::after { opacity: 1; }
-        tbody tr { transition: background-color 0.15s ease; }
         tbody tr:hover { background-color: var(--hover-bg); }
         tbody tr:nth-child(even) { background-color: rgba(0,0,0,0.02); }
         body.dark-theme tbody tr:nth-child(even) { background-color: rgba(255,255,255,0.02); }
@@ -223,48 +222,29 @@
             color: var(--text-secondary); cursor: pointer; transition: all 0.2s;
         }
         .action-btn:hover { background: var(--hover-bg); color: var(--primary-color); }
-        .action-btn svg { width: 16px; height: 16px; }
+        .action-btn i { font-size: 16px; }
         .tag { font-size: 12px; background-color: var(--header-bg); color: var(--header-text); padding: 4px 8px; border-radius: 6px; }
         .badge {
             display: inline-block; padding: 4px 10px; font-size: 12px; font-weight: 600;
             border-radius: 12px; text-align: center;
         }
         .badge.venda { background-color: var(--badge-venda-bg); color: var(--badge-venda-text); }
-        .badge.compra { background-color: var(--badge-compra-bg); color: var(--badge-compra-text); }
-        .badge.devolucao { background-color: var(--badge-devolucao-bg); color: var(--badge-devolucao-text); }
-        .badge.transferencia { background-color: var(--badge-transferencia-bg); color: var(--badge-transferencia-text); }
+        .badge.compra-mp { background-color: var(--badge-compra-bg); color: var(--badge-compra-text); }
+        .badge.devolução-garantia { background-color: var(--badge-devolucao-bg); color: var(--badge-devolucao-text); }
+        .badge.transferência { background-color: var(--badge-transferencia-bg); color: var(--badge-transferencia-text); }
         .badge.default { background-color: var(--badge-default-bg); color: var(--badge-default-text); }
 
-        /* --- Empty State --- */
-        .empty-state-container {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 80px 20px; text-align: center;
-        }
+        /* --- Empty State, Busca, Segment Control... --- */
+        td.empty-state-container { text-align: center; }
+        .empty-state-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 20px; }
         .empty-state-container svg { width: 80px; height: 80px; color: var(--border-color); margin-bottom: 16px; }
         .empty-state-container h3 { margin: 0 0 8px; font-size: 18px; font-weight: 600; }
         .empty-state-container p { color: var(--text-secondary); margin: 0; max-width: 400px; }
-        
-        /* --- Busca e Ordenação --- */
-        .search-input {
-            width: 100%; max-width: 500px; padding: 12px 16px; margin-bottom: 16px; border-radius: 8px;
-            border: 1px solid var(--border-color); background-color: var(--card-bg);
-            color: var(--text-color); box-sizing: border-box; font-size: 16px;
-        }
-
-        /* --- Segmented Control for Raw Data Filter --- */
-        .segment-control {
-            display: flex; gap: 8px; margin-bottom: 16px; background-color: var(--segment-control-bg);
-            padding: 6px; border-radius: 8px; width: fit-content;
-        }
-        .segment-btn {
-            padding: 8px 16px; border: none; border-radius: 6px; background-color: transparent;
-            color: var(--text-secondary); font-weight: 500; cursor: pointer; transition: all 0.2s ease-in-out;
-        }
+        .search-input { width: 100%; max-width: 500px; padding: 12px 16px; margin-bottom: 16px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-color); color: var(--text-color); font-size: 16px; box-sizing: border-box; }
+        .segment-control { display: flex; gap: 8px; margin-bottom: 16px; background-color: var(--segment-control-bg); padding: 6px; border-radius: 8px; width: fit-content; }
+        .segment-btn { padding: 8px 16px; border: none; border-radius: 6px; background-color: transparent; color: var(--text-secondary); font-weight: 500; cursor: pointer; transition: all 0.2s; }
         .segment-btn:hover { color: var(--text-color); }
-        .segment-btn.active {
-            background-color: var(--primary-color); color: white; font-weight: 600;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
+        .segment-btn.active { background-color: var(--primary-color); color: white; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         
         /* --- Theme Switch --- */
         .theme-switch-wrapper { display: flex; align-items: center; }
@@ -276,25 +256,12 @@
         input:checked + .slider:before { transform: translateX(26px); }
         .theme-switch-wrapper span { margin-left: 10px; }
         
-        /* --- Estilo de Carregamento --- */
+        /* --- Carregamento e Notificações (Toast) --- */
         .processing { position: relative; color: transparent !important; pointer-events: none; }
         .processing p, .processing i { color: transparent !important; }
-        .processing::after {
-            content: ''; display: block; position: absolute; left: 50%; top: 50%; width: 32px; height: 32px;
-            margin: -16px 0 0 -16px; border-radius: 50%; border: 3px solid var(--primary-color);
-            border-color: var(--primary-color) transparent var(--primary-color) transparent; animation: spin 1s linear infinite;
-        }
-
-        /* --- Toast Notifications --- */
-        .toast-container {
-            position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex;
-            flex-direction: column; gap: 12px;
-        }
-        .toast {
-            min-width: 320px; padding: 16px 20px; background: var(--card-bg); border-radius: 8px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); border-left: 4px solid;
-            display: flex; align-items: center; gap: 12px; animation: slideInRight 0.4s ease-out forwards;
-        }
+        .processing::after { content: ''; display: block; position: absolute; left: 50%; top: 50%; width: 32px; height: 32px; margin: -16px 0 0 -16px; border-radius: 50%; border: 3px solid var(--primary-color); border-color: var(--primary-color) transparent var(--primary-color) transparent; animation: spin 1s linear infinite; }
+        .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; }
+        .toast { min-width: 320px; padding: 16px 20px; background: var(--card-bg); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); border-left: 4px solid; display: flex; align-items: center; gap: 12px; animation: slideInRight 0.4s ease-out forwards; }
         .toast.hiding { animation: slideOutRight 0.4s ease-in forwards; }
         .toast.success { border-left-color: var(--success-color); }
         .toast.error { border-left-color: var(--primary-color); }
@@ -369,22 +336,10 @@
         </div>
 
         <div class="filter-bar">
-            <div class="filter-group">
-                <label for="start-date">De:</label>
-                <input type="date" id="start-date">
-            </div>
-            <div class="filter-group">
-                <label for="end-date">Até:</label>
-                <input type="date" id="end-date">
-            </div>
-             <div class="filter-group">
-                <label for="destinatario-filter">Destinatário:</label>
-                <select id="destinatario-filter"><option value="">Todos</option></select>
-            </div>
-            <div class="filter-group">
-                <label for="transportadora-filter">Transportadora:</label>
-                <select id="transportadora-filter"><option value="">Todas</option></select>
-            </div>
+            <div class="filter-group"><label for="start-date">De:</label><input type="date" id="start-date" placeholder="dd/mm/aaaa"></div>
+            <div class="filter-group"><label for="end-date">Até:</label><input type="date" id="end-date" placeholder="dd/mm/aaaa"></div>
+            <div class="filter-group"><label for="destinatario-filter">Destinatário:</label><select id="destinatario-filter"><option value="">Todos</option></select></div>
+            <div class="filter-group"><label for="transportadora-filter">Transportadora:</label><select id="transportadora-filter"><option value="">Todas</option></select></div>
             <div class="filter-group">
                 <label for="operation-filter">Operação:</label>
                 <select id="operation-filter">
@@ -395,17 +350,12 @@
                     <option value="Transferência">Transferência</option>
                 </select>
             </div>
-            <div class="filter-group">
-                <label for="cfop-filter">CFOP:</label>
-                <input type="text" id="cfop-filter" placeholder="Ex: 5102">
-            </div>
+            <div class="filter-group"><label for="cfop-filter">CFOP:</label><input type="text" id="cfop-filter" placeholder="Ex: 5102"></div>
             <div class="main-actions">
                 <button id="apply-filter-btn"><i class="fas fa-filter"></i>Aplicar</button>
                 <button id="clear-filter-btn"><i class="fas fa-eraser"></i>Limpar</button>
                 <button id="export-excel-btn"><i class="fas fa-file-excel"></i>Exportar</button>
-                 <button id="manual-refresh-btn" class="refresh-btn" title="Atualizar Dados Agora" style="width:auto; height:auto; padding: 10px 16px;">
-                    <i class="fas fa-sync-alt" id="refresh-icon"></i>
-                </button>
+                <button id="manual-refresh-btn"><i class="fas fa-sync-alt" id="refresh-icon"></i></button>
             </div>
         </div>
 
@@ -443,8 +393,7 @@
                                 <th>AÇÕES</th>
                             </tr>
                         </thead>
-                        <tbody id="consolidated-table-body">
-                        </tbody>
+                        <tbody id="consolidated-table-body"></tbody>
                     </table>
                 </div>
             </div>
@@ -471,8 +420,7 @@
                                 <th>AÇÕES</th>
                             </tr>
                         </thead>
-                        <tbody id="raw-data-table-body">
-                        </tbody>
+                        <tbody id="raw-data-table-body"></tbody>
                     </table>
                 </div>
             </div>
@@ -496,9 +444,7 @@
                 <h2>Customizar Visibilidade de KPIs</h2>
                 <button class="close-modal-btn" id="close-kpi-modal">&times;</button>
             </div>
-            <div class="kpi-settings-grid" id="kpi-settings-grid">
-                <!-- Checkboxes serão inseridos dinamicamente aqui -->
-            </div>
+            <div class="kpi-settings-grid" id="kpi-settings-grid"></div>
         </div>
     </div>
 
@@ -529,9 +475,8 @@
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
         const refreshIcon = document.getElementById('refresh-icon');
-
         let rawDataSource = [];
-        let fullConsolidatedData = []; // Armazena todos os dados para filtros dinâmicos e exportação
+        let fullConsolidatedData = []; 
         let currentRawDataFilter = 'all';
 
         // --- FUNÇÕES DE RENDERIZAÇÃO E FORMATAÇÃO ---
@@ -558,12 +503,8 @@
         
         function getOperationBadge(category) {
             if (!category) return `<span class="badge default">N/D</span>`;
-            const lowerCategory = category.toLowerCase();
-            let className = 'default';
-            if (lowerCategory.includes('venda')) className = 'venda';
-            else if (lowerCategory.includes('compra')) className = 'compra';
-            else if (lowerCategory.includes('devolução') || lowerCategory.includes('garantia')) className = 'devolucao';
-            else if (lowerCategory.includes('transferência')) className = 'transferencia';
+            const slug = category.toLowerCase().replace(/\//g, '-').replace(/\s/g, '');
+            const className = ['venda', 'compra-mp', 'devolução-garantia', 'transferência'].includes(slug) ? slug : 'default';
             return `<span class="badge ${className}">${category}</span>`;
         }
         
@@ -575,7 +516,7 @@
             const grid = document.getElementById('kpi-settings-grid');
             const kpiCards = document.querySelectorAll('.kpi-card');
 
-            // Popula o modal com os KPIs existentes
+            grid.innerHTML = '';
             kpiCards.forEach(card => {
                 const kpiId = card.dataset.kpi;
                 const kpiTitle = card.querySelector('h3').innerText;
@@ -611,10 +552,9 @@
             const savedVisibility = JSON.parse(localStorage.getItem('kpiVisibility'));
             const visibility = savedVisibility || {};
             
-            // Seta o estado dos checkboxes e aplica a visibilidade
             document.querySelectorAll('#kpi-settings-grid input[type="checkbox"]').forEach(checkbox => {
                 const kpiId = checkbox.dataset.kpi;
-                checkbox.checked = visibility[kpiId] !== false; // Padrão é visível
+                checkbox.checked = visibility[kpiId] !== false;
             });
             applyKpiVisibility(visibility);
         }
@@ -622,17 +562,12 @@
         function applyKpiVisibility(visibility) {
             document.querySelectorAll('.kpi-card').forEach(card => {
                 const kpiId = card.dataset.kpi;
-                card.style.display = visibility[kpiId] === false ? 'none' : 'block';
+                card.style.display = visibility[kpiId] === false ? 'none' : 'grid';
             });
         }
         
         function updateKpis(data) {
-            const kpiValues = {
-                'kpi-custo-total': 'R$ 0,00', 'kpi-perc-frete': '0,00%', 'kpi-custo-ton': 'R$ 0,00',
-                'kpi-nfes-processadas': '0', 'kpi-taxas-extras': 'R$ 0,00', 'kpi-peso-total': '0,00',
-                'kpi-valor-notas': 'R$ 0,00', 'kpi-ctes-pendentes': '0'
-            };
-
+             const kpiValues = { 'kpi-custo-total': 'R$ 0,00', 'kpi-perc-frete': '0,00%', 'kpi-custo-ton': 'R$ 0,00', 'kpi-nfes-processadas': '0', 'kpi-taxas-extras': 'R$ 0,00', 'kpi-peso-total': '0,00', 'kpi-valor-notas': 'R$ 0,00', 'kpi-ctes-pendentes': '0' };
             if (data && data.length > 0) {
                 const totals = data.reduce((acc, item) => {
                     acc.custoTotal += item.custo_frete || 0;
@@ -643,29 +578,24 @@
                     return acc;
                 }, { custoTotal: 0, valorTotalNota: 0, pesoTotalTon: 0, ctesPendentes: 0, custoTaxasExtras: 0 });
 
-                const percentualFreteMedio = totals.valorTotalNota > 0 ? (totals.custoTotal / totals.valorTotalNota) * 100 : 0;
-                const custoMedioPorTon = totals.pesoTotalTon > 0 ? totals.custoTotal / totals.pesoTotalTon : 0;
-
                 kpiValues['kpi-custo-total'] = formatCurrency(totals.custoTotal);
-                kpiValues['kpi-perc-frete'] = `${percentualFreteMedio.toFixed(2).replace('.',',')}%`;
-                kpiValues['kpi-custo-ton'] = formatCurrency(custoMedioPorTon);
+                kpiValues['kpi-perc-frete'] = `${(totals.valorTotalNota > 0 ? (totals.custoTotal / totals.valorTotalNota) * 100 : 0).toFixed(2).replace('.',',')}%`;
+                kpiValues['kpi-custo-ton'] = formatCurrency(totals.pesoTotalTon > 0 ? totals.custoTotal / totals.pesoTotalTon : 0);
                 kpiValues['kpi-nfes-processadas'] = data.length;
                 kpiValues['kpi-taxas-extras'] = formatCurrency(totals.custoTaxasExtras);
                 kpiValues['kpi-peso-total'] = (totals.pesoTotalTon || 0).toFixed(3).replace('.',',');
                 kpiValues['kpi-valor-notas'] = formatCurrency(totals.valorTotalNota);
                 kpiValues['kpi-ctes-pendentes'] = totals.ctesPendentes;
             }
-
             for (const [id, value] of Object.entries(kpiValues)) {
-                document.getElementById(id).textContent = value;
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
             }
         }
         
         // --- LÓGICA DE DADOS E FILTROS ---
         async function fetchInitialData() {
-            refreshIcon.classList.add('spinning');
             const { data, error } = await supabase.from('relatorio_consolidado').select('*').eq('ignorado', false).order('data_emissao_nfe', { ascending: false });
-            
             if (error) {
                 console.error('Erro ao buscar dados iniciais:', error);
                 showToast('Erro ao carregar dados iniciais.', 'error');
@@ -677,24 +607,17 @@
         }
 
         function populateDynamicFilters(data) {
-            const destinatarios = new Set();
-            const transportadoras = new Set();
-
-            data.forEach(item => {
-                if(item.cliente_destinatario) destinatarios.add(item.cliente_destinatario.trim());
-                if(item.nome_transportadora) transportadoras.add(item.nome_transportadora.trim());
-            });
-
-            const populateSelect = (selectId, optionsSet) => {
+            const populateSelect = (selectId, key) => {
                 const select = document.getElementById(selectId);
-                select.innerHTML = '<option value="">Todos</option>';
-                [...optionsSet].sort().forEach(option => {
-                    select.innerHTML += `<option value="${option}">${option}</option>`;
+                const options = [...new Set(data.map(item => item[key]).filter(Boolean))].sort((a,b) => a.localeCompare(b));
+                let optionsHTML = '<option value="">Todos</option>';
+                options.forEach(option => {
+                    optionsHTML += `<option value="${option}">${option}</option>`;
                 });
+                select.innerHTML = optionsHTML;
             };
-
-            populateSelect('destinatario-filter', destinatarios);
-            populateSelect('transportadora-filter', transportadoras);
+            populateSelect('destinatario-filter', 'cliente_destinatario');
+            populateSelect('transportadora-filter', 'nome_transportadora');
         }
 
         function applyFiltersAndRender() {
@@ -751,12 +674,8 @@
                     <td>${formatCurrency(item.valor_pedagio)}</td>
                     <td>${item.qtd_ctes || 0}</td>
                     <td>
-                        <button class="action-btn" title="Visualizar XML Principal" onclick="window.viewDetails('${item.link_xml_principal}')">
-                           <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="action-btn" title="Excluir do Relatório" onclick="window.deleteRecord('${item.chave_nfe}')">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
+                        <button class="action-btn" title="Visualizar XML Principal" onclick="window.viewDetails('${item.link_xml_principal}')"><i class="fas fa-eye"></i></button>
+                        <button class="action-btn" title="Excluir do Relatório" onclick="window.deleteRecord('${item.chave_nfe}')"><i class="fas fa-trash-alt"></i></button>
                     </td>
                 `;
                 consolidatedTableBody.appendChild(tr);
@@ -764,163 +683,139 @@
         }
         
         async function fetchAndRenderRawData(startDate, endDate) {
-            // ... (A lógica original de fetchAndRenderRawData e renderRawDataTable permanece a mesma)
+            let ctesQuery = supabase.from('ctes_processados').select('*').order('created_at', { ascending: false });
+            let nfesQuery = supabase.from('nfes_processadas').select('*').order('created_at', { ascending: false });
+
+            if (startDate) {
+                ctesQuery = ctesQuery.gte('created_at', startDate);
+                nfesQuery = nfesQuery.gte('created_at', startDate);
+            }
+            if (endDate) {
+                let endOfDay = new Date(endDate);
+                endOfDay.setHours(23, 59, 59, 999);
+                ctesQuery = ctesQuery.lte('created_at', endOfDay.toISOString());
+                nfesQuery = nfesQuery.lte('created_at', endOfDay.toISOString());
+            }
+
+            const [{data: ctes, error: ctesError}, {data: nfes, error: nfesError}] = await Promise.all([ctesQuery, nfesQuery]);
+
+            if (ctesError || nfesError) { 
+                console.error('Erro ao buscar dados brutos:', ctesError || nfesError); 
+                showToast('Erro ao buscar dados brutos.', 'error');
+                return; 
+            }
+
+            rawDataSource = [
+                ...ctes.map(d => ({ ...d, type: 'CT-e', key: d.chave_acesso_propria, value: d.valor_servico, link: d.link_xml, transportadora: d.nome_transportadora, tipo_servico: d.tipo_servico_cte })),
+                ...nfes.map(d => ({ ...d, type: 'NF-e', key: d.chave_acesso_propria, value: d.valor_total_nota, link: d.link_xml, transportadora: d.nome_transportadora || '--', tipo_servico: '--' }))
+            ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            
+            renderRawDataTable();
         }
+
         function renderRawDataTable() {
-           // ... (A lógica original permanece a mesma)
+            const filteredData = rawDataSource.filter(item => currentRawDataFilter === 'all' || item.type === currentRawDataFilter);
+            if (filteredData.length === 0) {
+                const message = rawDataSource.length === 0 ? "Nenhum documento processado" : `Nenhum documento do tipo ${currentRawDataFilter} encontrado`;
+                const subMessage = rawDataSource.length === 0 ? "Importe arquivos XML para visualizar os dados brutos." : "Tente outro filtro ou importe novos arquivos.";
+                renderEmptyState(rawDataTableBody, message, subMessage);
+                return;
+            }
+
+            rawDataTableBody.innerHTML = '';
+            filteredData.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${new Date(item.created_at).toLocaleString('pt-BR')}</td>
+                    <td><span class="tag">${item.type}</span></td>
+                    <td><span title="${item.key}">${item.key.substring(0, 20)}...</span></td>
+                    <td>${item.transportadora || '--'}</td>
+                    <td>${item.tipo_servico || '--'}</td>
+                    <td>${formatCurrency(item.value)}</td>
+                    <td><button class="action-btn" title="Visualizar XML" onclick="window.viewDetails('${item.link}')"><i class="fas fa-eye"></i></button></td>
+                `;
+                rawDataTableBody.appendChild(tr);
+            });
         }
 
         // --- FUNÇÃO CENTRAL DE ATUALIZAÇÃO ---
         const debouncedRefresh = debounce(refreshDashboard, 2000);
-        
         async function refreshDashboard() {
             refreshIcon.classList.add('spinning');
             try {
                 await fetchInitialData();
                 applyFiltersAndRender();
-                // O fetchAndRenderRawData pode ser chamado aqui se necessário
-                // await fetchAndRenderRawData(...);
+                await fetchAndRenderRawData(document.getElementById('start-date').value, document.getElementById('end-date').value);
             } catch (error) {
                 console.error("Erro ao atualizar o dashboard:", error);
                 showToast("Ocorreu um erro ao atualizar os dados.", "error");
             } finally {
-                setTimeout(() => refreshIcon.classList.remove('spinning'), 500);
+                refreshIcon.classList.remove('spinning');
             }
         }
         
-        // --- UPLOAD, AÇÕES E OUTROS EVENTOS ---
-        
-        document.getElementById('apply-filter-btn').addEventListener('click', () => {
-             // ... (lógica original) ...
-             applyFiltersAndRender();
-        });
-
+        // --- UPLOAD, AÇÕES, EXPORTAÇÃO E EVENTOS ---
+        document.getElementById('apply-filter-btn').addEventListener('click', applyFiltersAndRender);
         document.getElementById('clear-filter-btn').addEventListener('click', () => {
-             // ... (lógica original) ...
-             refreshDashboard();
+            document.querySelectorAll('.filter-bar input, .filter-bar select').forEach(el => el.value = '');
+            applyFiltersAndRender();
+            showToast('Filtros limpos.', 'success');
         });
-        
-        document.getElementById('export-excel-btn').addEventListener('click', exportToExcel);
-        
-        function exportToExcel() {
-            const tableRows = consolidatedTableBody.querySelectorAll('tr');
-            if (tableRows.length === 0 || (tableRows.length === 1 && tableRows[0].querySelector('.empty-state-container'))) {
-                showToast('Não há dados para exportar.', 'warning');
-                return;
+        document.getElementById('export-excel-btn').addEventListener('click', () => {
+            const rows = consolidatedTableBody.querySelectorAll('tr');
+            if (rows.length === 0 || (rows.length === 1 && rows[0].querySelector('.empty-state-container'))) {
+                showToast('Não há dados para exportar.', 'warning'); return;
             }
-
-            // Remapeia os dados da tabela para um formato limpo
-            const dataToExport = Array.from(tableRows).map(row => {
+            const data = Array.from(rows).map(row => {
                 const cells = row.querySelectorAll('td');
                 return {
-                    "Data Emissão": cells[0].textContent,
-                    "Chave NF-e": cells[1].querySelector('span')?.title || cells[1].textContent,
-                    "Cliente (Destinatário)": cells[2].textContent,
-                    "Transportadora": cells[3].textContent,
-                    "UF": cells[4].textContent,
-                    "Operação": cells[5].textContent,
-                    "CFOP": cells[6].textContent,
-                    "Volumes": cells[7].textContent,
-                    "Espécie": cells[8].textContent,
-                    "Valor Nota": cells[9].textContent,
-                    "Peso (TON)": cells[10].textContent,
-                    "Custo Frete": cells[11].textContent,
-                    "% Frete/Nota": cells[12].textContent,
-                    "Custo/TON": cells[13].textContent,
-                    "Agendamento": cells[14].textContent,
-                    "Reentrega": cells[15].textContent,
-                    "Pedágio": cells[16].textContent,
+                    "Data Emissão": cells[0].textContent, "Chave NF-e": cells[1].querySelector('span')?.title || '',
+                    "Cliente": cells[2].textContent, "Transportadora": cells[3].textContent, "UF": cells[4].textContent,
+                    "Operação": cells[5].textContent, "CFOP": cells[6].textContent, "Volumes": cells[7].textContent,
+                    "Espécie": cells[8].textContent, "Valor Nota": cells[9].textContent, "Peso (TON)": cells[10].textContent,
+                    "Custo Frete": cells[11].textContent, "% Frete/Nota": cells[12].textContent, "Custo/TON": cells[13].textContent,
+                    "Agendamento": cells[14].textContent, "Reentrega": cells[15].textContent, "Pedágio": cells[16].textContent,
                     "Qtd. CT-es": cells[17].textContent
                 };
             });
-
-            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Relatorio_Fretes");
-            XLSX.writeFile(workbook, "Relatorio_Consolidado_Fretes.xlsx");
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Relatorio_Fretes");
+            XLSX.writeFile(wb, "Relatorio_Consolidado_Fretes.xlsx");
             showToast('Exportação para Excel concluída!', 'success');
-        }
+        });
 
-        // --- INICIALIZAÇÃO E REALTIME ---
-        function initialize() {
-            const themeToggle = document.getElementById('checkbox');
-            const themeLabel = document.getElementById('theme-label');
-            const logoImg = document.getElementById('logo-img');
-            const logoClaro = 'https://ctfamadobrasil.com.br/wp-content/uploads/2025/09/logo.png';
-            const logoEscuro = 'https://ctfamadobrasil.com.br/wp-content/uploads/2025/12/Gemini_Generated_Image_v8cib8v8cib8v8ci-removebg-preview.png';
-
-            themeToggle.addEventListener('change', () => {
-                document.body.classList.toggle('dark-theme');
-                const isDarkMode = document.body.classList.contains('dark-theme');
-                themeLabel.textContent = isDarkMode ? 'Tema Escuro' : 'Tema Claro';
-                logoImg.src = isDarkMode ? logoEscuro : logoClaro;
-            });
-
-            setupTabs();
-            setupInteractiveElements();
-            setupKpiSettings();
-            refreshDashboard(); // Carga inicial
-
-            // Listener de Realtime
-            supabase
-                .channel('public-db-changes')
-                .on('postgres_changes', 
-                    { event: '*', schema: 'public', table: 'relatorio_consolidado' }, 
-                    (payload) => {
-                        console.log('Realtime change detected in relatorio_consolidado:', payload);
-                        showToast(`Dados atualizados em tempo real!`, 'success');
-                        debouncedRefresh();
-                    }
-                )
-                 .on('postgres_changes', { event: '*', schema: 'public', table: 'ctes_processados' }, () => debouncedRefresh())
-                 .on('postgres_changes', { event: '*', schema: 'public', table: 'nfes_processadas' }, () => debouncedRefresh())
-                .subscribe((status) => {
-                    if (status === 'SUBSCRIBED') console.log('Conectado ao canal Realtime do Supabase!');
-                    else console.error(`Status do canal Realtime: ${status}`);
-                });
-        }
-        
-        // --- FUNÇÕES GLOBAIS E HELPERS JÁ EXISTENTES ---
-        // As funções:
-        // window.viewDetails, window.deleteRecord, setupTabs, showToast,
-        // setupInteractiveElements, filterTable, sortTableByColumn, handleFileUpload, etc.
-        // são omitidas aqui por brevidade, mas estão presentes e funcionais no código original.
-        // Abaixo, elas são copiadas integralmente para garantir a integridade.
-
-        window.viewDetails = function(link) {
-            if (link) window.open(link, '_blank');
-            else showToast('Nenhum link de XML associado.', 'warning');
-        }
-
-        window.deleteRecord = async function(chave_nfe) {
+        window.viewDetails = (link) => { if (link) window.open(link, '_blank'); else showToast('Nenhum link de XML associado.', 'warning'); }
+        window.deleteRecord = async (chave_nfe) => {
             if (confirm(`Tem certeza que deseja remover a NF-e ${chave_nfe.substring(0,10)}... do relatório?`)) {
                 try {
-                    const response = await fetch(N8N_DELETE_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chave_nfe_para_excluir: chave_nfe }) });
-                    if (!response.ok) throw new Error('Falha na resposta do servidor.');
+                    const res = await fetch(N8N_DELETE_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chave_nfe_para_excluir: chave_nfe }) });
+                    if (!res.ok) throw new Error('Falha na resposta do servidor.');
                     showToast('Registro marcado para exclusão. Os dados serão atualizados em breve.', 'success');
-                } catch (error) {
-                    console.error('Erro ao chamar webhook de exclusão:', error);
-                    showToast('Ocorreu um erro ao excluir o registro.', 'error');
-                }
+                } catch (error) { showToast('Ocorreu um erro ao excluir o registro.', 'error'); }
+            }
+        }
+        
+        async function handleFileUpload(files) {
+            if (files.length === 0) return;
+            dropZone.classList.add('processing');
+            showToast(`Enviando ${files.length} arquivo(s) para a fila...`, 'success');
+            try {
+                const promises = Array.from(files).map(file => {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    return fetch(N8N_QUEUE_WEBHOOK, { method: 'POST', body: formData });
+                });
+                await Promise.all(promises);
+                showToast(`Todos os ${files.length} arquivos foram adicionados à fila de processamento.`, 'success');
+            } catch (error) {
+                showToast('Ocorreu um erro ao enviar os arquivos.', 'error');
+            } finally {
+                dropZone.classList.remove('processing');
+                fileInput.value = '';
             }
         }
 
-        function setupTabs() {
-            const tabButtons = document.querySelectorAll('.tab-button');
-            const viewContents = document.querySelectorAll('.view-content');
-            tabButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
-                    button.classList.add('active');
-                    const viewId = button.getAttribute('data-view');
-                    viewContents.forEach(content => {
-                        content.classList.remove('active');
-                        if(content.id === viewId) content.classList.add('active');
-                    });
-                });
-            });
-        }
-        
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -932,98 +827,106 @@
                 toast.addEventListener('animationend', () => toast.remove());
             }, 4000);
         }
-        
-        function setupInteractiveElements() {
-            document.getElementById('search-consolidated').addEventListener('keyup', (e) => filterTable(consolidatedTableBody, e.target.value));
-            document.getElementById('search-raw').addEventListener('keyup', (e) => filterTable(rawDataTableBody, e.target.value));
-            
-            document.querySelectorAll('th.sortable').forEach((headerCell) => {
-                headerCell.addEventListener('click', () => {
-                    const table = headerCell.closest('table');
-                    sortTableByColumn(table, Array.from(headerCell.parentNode.children).indexOf(headerCell));
-                });
-            });
-
-            const filterContainer = document.getElementById('raw-data-filter');
-            filterContainer.addEventListener('click', (e) => {
-                const targetButton = e.target.closest('.segment-btn');
-                if (targetButton) {
-                    filterContainer.querySelector('.active').classList.remove('active');
-                    targetButton.classList.add('active');
-                    currentRawDataFilter = targetButton.dataset.type;
-                    renderRawDataTable();
-                }
-            });
-        }
 
         function filterTable(tbody, searchTerm) {
             const term = searchTerm.toLowerCase();
-            Array.from(tbody.querySelectorAll('tr')).forEach(row => {
-                if (row.querySelector('.empty-state-container')) return;
-                row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
+            tbody.querySelectorAll('tr').forEach(row => {
+                const isVisible = row.textContent.toLowerCase().includes(term);
+                row.style.display = isVisible ? '' : 'none';
             });
         }
 
-        function sortTableByColumn(table, columnIndex) {
+        function sortTableByColumn(table, colIndex) {
             const tbody = table.tBodies[0];
-            const headerCell = table.tHead.querySelectorAll('th')[columnIndex];
-            if (!headerCell.classList.contains('sortable')) return;
-            
-            const isAsc = headerCell.dataset.sortDirection === 'asc';
-            headerCell.dataset.sortDirection = isAsc ? 'desc' : 'asc';
+            const th = table.tHead.rows[0].cells[colIndex];
+            const isAsc = th.dataset.sort === 'asc';
+            th.dataset.sort = isAsc ? 'desc' : 'asc';
 
-            const rows = Array.from(tbody.querySelectorAll('tr'));
-            if(rows.length <= 1) return;
-            
+            const rows = Array.from(tbody.rows);
             rows.sort((a, b) => {
-                let aText = a.cells[columnIndex].textContent.trim();
-                let bText = b.cells[columnIndex].textContent.trim();
+                let aText = a.cells[colIndex].textContent.trim();
+                let bText = b.cells[colIndex].textContent.trim();
                 
-                const aNum = parseFloat(aText.replace('R$', '').replace(/\./g, '').replace(',', '.').trim());
-                const bNum = parseFloat(bText.replace('R$', '').replace(/\./g, '').replace(',', '.').trim());
-
-                if (!isNaN(aNum) && !isNaN(bNum)) {
+                if (aText.match(/^\d{2}\/\d{2}\/\d{4}/)) { // Date (dd/mm/yyyy)
+                    aText = aText.split('/').reverse().join('');
+                    bText = bText.split('/').reverse().join('');
+                } else if (aText.startsWith('R$') || !isNaN(parseFloat(aText.replace(/\./g, '').replace(',', '.')))) { // Currency/Number
+                    const aNum = parseFloat(aText.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+                    const bNum = parseFloat(bText.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
                     return isAsc ? bNum - aNum : aNum - bNum;
                 }
                 
-                if (aText.match(/^\d{2}\/\d{2}\/\d{4}/)) {
-                    const aDate = new Date(aText.split('/').reverse().join('-'));
-                    const bDate = new Date(bText.split('/').reverse().join('-'));
-                    return isAsc ? bDate - aDate : aDate - bDate;
-                }
-                
-                return aText.localeCompare(bText, undefined, { numeric: true }) * (isAsc ? -1 : 1);
+                return isAsc 
+                    ? bText.localeCompare(aText, 'pt-BR', { numeric: true }) 
+                    : aText.localeCompare(bText, 'pt-BR', { numeric: true });
             });
-            
-            tbody.append(...rows);
+            rows.forEach(row => tbody.appendChild(row));
         }
 
-        document.getElementById('upload-link').addEventListener('click', (e) => { e.preventDefault(); fileInput.click(); });
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'); });
-        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFileUpload(e.dataTransfer.files); });
-        fileInput.addEventListener('change', () => { handleFileUpload(fileInput.files); });
+        // --- INICIALIZAÇÃO ---
+        function initialize() {
+            // Theme
+            const themeToggle = document.getElementById('checkbox');
+            const themeLabel = document.getElementById('theme-label');
+            const logoImg = document.getElementById('logo-img');
+            const logoClaro = 'https://ctfamadobrasil.com.br/wp-content/uploads/2025/09/logo.png';
+            const logoEscuro = 'https://ctfamadobrasil.com.br/wp-content/uploads/2025/12/Gemini_Generated_Image_v8cib8v8cib8v8ci-removebg-preview.png';
+            themeToggle.addEventListener('change', () => {
+                const isDark = document.body.classList.toggle('dark-theme');
+                themeLabel.textContent = isDark ? 'Tema Escuro' : 'Tema Claro';
+                logoImg.src = isDark ? logoEscuro : logoClaro;
+            });
 
-        async function handleFileUpload(files) {
-            if (files.length === 0) return;
-            dropZone.classList.add('processing');
-            showToast(`Enviando ${files.length} arquivo(s) para a fila...`, 'success');
-            try {
-                const uploadPromises = Array.from(files).map(async (file) => {
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    const response = await fetch(N8N_QUEUE_WEBHOOK, { method: 'POST', body: formData });
-                    if (!response.ok) throw new Error(`Falha no envio de ${file.name}.`);
+            // Tabs
+            document.querySelector('.view-tabs').addEventListener('click', (e) => {
+                if (e.target.matches('.tab-button')) {
+                    document.querySelector('.view-tabs .active').classList.remove('active');
+                    document.querySelector('.view-content.active').classList.remove('active');
+                    e.target.classList.add('active');
+                    document.getElementById(e.target.dataset.view).classList.add('active');
+                }
+            });
+
+            // Search and Sort
+            document.getElementById('search-consolidated').addEventListener('keyup', (e) => filterTable(consolidatedTableBody, e.target.value));
+            document.getElementById('search-raw').addEventListener('keyup', (e) => filterTable(rawDataTableBody, e.target.value));
+            document.querySelectorAll('th.sortable').forEach(th => th.addEventListener('click', () => sortTableByColumn(th.closest('table'), th.cellIndex)));
+
+            // Raw Data Filter
+            document.getElementById('raw-data-filter').addEventListener('click', (e) => {
+                if(e.target.matches('.segment-btn')){
+                    document.querySelector('#raw-data-filter .active').classList.remove('active');
+                    e.target.classList.add('active');
+                    currentRawDataFilter = e.target.dataset.type;
+                    renderRawDataTable();
+                }
+            });
+            
+            // Upload
+            document.getElementById('upload-link').addEventListener('click', (e) => { e.preventDefault(); fileInput.click(); });
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'); });
+            dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFileUpload(e.dataTransfer.files); });
+            fileInput.addEventListener('change', () => handleFileUpload(fileInput.files));
+            
+            document.getElementById('manual-refresh-btn').addEventListener('click', refreshDashboard);
+
+            setupKpiSettings();
+            refreshDashboard();
+
+            supabase.channel('public-db-changes')
+                .on('postgres_changes', { event: '*', schema: 'public' }, payload => {
+                    const relevantTables = ['relatorio_consolidado', 'ctes_processados', 'nfes_processadas'];
+                    if (relevantTables.includes(payload.table)) {
+                        console.log('Realtime change detected:', payload);
+                        showToast(`Dados atualizados em tempo real!`, 'success');
+                        debouncedRefresh();
+                    }
+                })
+                .subscribe(status => {
+                    if (status === 'SUBSCRIBED') console.log('Conectado ao canal Realtime do Supabase!');
+                    else console.error(`Status do canal Realtime: ${status}`);
                 });
-                await Promise.all(uploadPromises);
-                showToast(`Todos os ${files.length} arquivos foram adicionados à fila de processamento.`, 'success');
-            } catch (error) {
-                console.error(`Falha no processo de envio:`, error);
-                showToast(error.message || 'Ocorreu um erro ao enviar os arquivos.', 'error');
-            } finally {
-                dropZone.classList.remove('processing');
-                fileInput.value = '';
-            }
         }
 
         initialize();
