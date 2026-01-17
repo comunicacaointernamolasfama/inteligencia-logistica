@@ -18,6 +18,8 @@
             --hover-bg: rgba(239, 68, 68, 0.05);
             --success-color: #10b981;
             --warning-color: #f59e0b;
+            /* CORREÇÃO: Variável para o fundo do controle segmentado no tema claro */
+            --segment-control-bg: #e5e7eb; 
         }
 
         body.dark-theme {
@@ -29,6 +31,8 @@
             --header-text: #f9fafb;
             --border-color: #374151;
             --hover-bg: rgba(239, 68, 68, 0.1);
+            /* CORREÇÃO: Variável para o fundo do controle segmentado no tema escuro */
+            --segment-control-bg: #374151;
         }
 
         body {
@@ -331,7 +335,8 @@
             display: flex;
             gap: 8px;
             margin-bottom: 16px;
-            background-color: var(--header-bg);
+            /* CORREÇÃO: Utilizando a nova variável de tema */
+            background-color: var(--segment-control-bg);
             padding: 6px;
             border-radius: 8px;
             width: fit-content;
@@ -856,7 +861,8 @@
                 });
                 await Promise.all(uploadPromises);
                 showToast(`Todos os ${files.length} arquivos foram adicionados à fila de processamento.`, 'success');
-            } catch (error) {
+            } catch (error)
+        {
                 console.error(`Falha no processo de envio:`, error);
                 showToast(error.message || 'Ocorreu um erro ao enviar os arquivos.', 'error');
             } finally {
