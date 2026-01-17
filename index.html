@@ -15,13 +15,15 @@
             --header-bg: #1f2937;
             --header-text: #FFFFFF;
             --border-color: #e5e7eb;
-            --highlight-color: #ef4444; /* Vermelho FAMA */
-            --primary-color: #ef4444; /* Usado para ações principais */
+            --highlight-color: #ef4444;
+            --primary-color: #ef4444;
             --hover-bg: rgba(239, 68, 68, 0.05);
             --success-color: #10b981;
             --warning-color: #f59e0b;
             --info-color: #3b82f6;
             --segment-control-bg: #e5e7eb; 
+            --dropdown-bg: #FFFFFF;
+            --dropdown-hover: #f3f4f6;
         }
 
         body.dark-theme {
@@ -34,6 +36,8 @@
             --border-color: #374151;
             --hover-bg: rgba(239, 68, 68, 0.1);
             --segment-control-bg: #374151;
+            --dropdown-bg: #1f2937;
+            --dropdown-hover: #374151;
         }
 
         body {
@@ -45,7 +49,7 @@
         }
 
         .container {
-            max-width: 1800px; /* Expandido para tabela maior */
+            max-width: 1800px;
             margin: 0 auto;
             padding: 32px;
         }
@@ -89,7 +93,6 @@
         .upload-area.drag-over i { animation: bounce 0.6s ease-in-out infinite; }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
-
         /* --- KPI Grid & Config --- */
         .kpi-header-row {
             display: flex;
@@ -130,12 +133,10 @@
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
-            display: flex; /* Flex para garantir alinhamento */
+            display: flex;
             flex-direction: column;
         }
-        .kpi-card[data-visible="false"] {
-            display: none;
-        }
+        .kpi-card[data-visible="false"] { display: none; }
         .kpi-card::before {
             content: '';
             position: absolute;
@@ -168,10 +169,10 @@
         }
         .kpi-card .value.highlight { color: var(--primary-color); }
 
-        /* --- Barra de Filtros Refatorada --- */
+        /* --- Barra de Filtros Customizada (Multi-Select) --- */
         .filter-bar {
             display: flex;
-            align-items: flex-end; /* Alinha labels com inputs */
+            align-items: flex-end;
             gap: 16px;
             margin-bottom: 24px;
             padding: 20px;
@@ -180,12 +181,11 @@
             border-radius: 12px;
             flex-wrap: wrap;
         }
-        .filter-group { display: flex; flex-direction: column; gap: 4px; }
+        .filter-group { display: flex; flex-direction: column; gap: 4px; position: relative; }
         .filter-bar label { font-weight: 500; font-size: 12px; color: var(--text-secondary); text-transform: uppercase; }
         
         .filter-bar input[type="date"],
-        .filter-bar input[type="text"],
-        .filter-bar select {
+        .filter-bar input[type="text"] {
             background-color: var(--bg-color);
             color: var(--text-color);
             border: 1px solid var(--border-color);
@@ -193,19 +193,80 @@
             padding: 8px 12px;
             font-size: 14px;
             min-width: 140px;
-            height: 38px; /* Altura fixa para alinhamento */
+            height: 38px;
             box-sizing: border-box;
         }
-        .filter-bar input[type="text"]#cfop-filter { width: 100px; }
-        
+
+        /* --- Custom Multi-Select Dropdown --- */
+        .custom-select-btn {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 13px;
+            min-width: 200px;
+            height: 38px;
+            cursor: pointer;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+        .custom-select-btn::after {
+            content: '\25BC';
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: var(--dropdown-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            min-width: 240px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 100;
+            margin-top: 4px;
+            padding: 8px 0;
+        }
+        .dropdown-content.show { display: block; }
+        .dropdown-item {
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: var(--text-color);
+            font-size: 13px;
+        }
+        .dropdown-item:hover { background-color: var(--dropdown-hover); }
+        .dropdown-item input[type="checkbox"] { margin: 0; cursor: pointer; }
+        .search-in-dropdown {
+            width: calc(100% - 16px);
+            margin: 0 8px 8px 8px;
+            padding: 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-size: 12px;
+        }
+
         .filter-actions {
             display: flex;
             gap: 8px;
-            margin-left: auto; /* Empurra ações para a direita */
+            margin-left: auto;
             align-items: center;
         }
 
-        .filter-bar button {
+        .filter-bar button.action-btn-main {
             padding: 0 16px;
             height: 38px;
             border: none;
@@ -225,22 +286,27 @@
             background-color: transparent;
             border: 1px solid var(--border-color);
             color: var(--text-secondary);
+            height: 38px; width: 38px; padding: 0;
         }
         #clear-filter-btn:hover { background-color: var(--hover-bg); border-color: var(--primary-color); }
         
         #export-excel-btn {
-            background-color: #10b981; /* Verde Excel */
+            background-color: #10b981;
             color: white;
+            padding: 0 16px; height: 38px;
+            border: none; border-radius: 6px;
+            cursor: pointer; font-weight: 600; font-size: 14px;
         }
         #export-excel-btn:hover { background-color: #059669; }
 
-        /* Botão Refresh Manual */
         .refresh-btn {
             background-color: transparent !important;
             border: 1px solid var(--border-color) !important;
             color: var(--text-secondary) !important;
-            width: 38px !important; 
+            width: 38px !important; height: 38px;
             padding: 0 !important;
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 6px; cursor: pointer;
         }
         .refresh-btn:hover {
             border-color: var(--primary-color) !important;
@@ -248,7 +314,6 @@
             background-color: var(--hover-bg) !important;
         }
         
-        /* --- Animação de Rotação --- */
         @keyframes spin { 100% { transform: rotate(360deg); } }
         .spinning { animation: spin 1s linear infinite; }
 
@@ -275,7 +340,22 @@
         .view-content.active { display: block; animation: fadeIn 0.4s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- Tabela Enterprise-Grade --- */
+        /* --- Toolbar da Tabela --- */
+        .table-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .search-input {
+            width: 100%; max-width: 400px;
+            padding: 10px 16px;
+            border-radius: 8px; border: 1px solid var(--border-color);
+            background-color: var(--card-bg); color: var(--text-color);
+            font-size: 14px;
+        }
+
+        /* --- Tabela --- */
         .data-table-container {
             background: var(--card-bg);
             border-radius: 12px;
@@ -283,8 +363,16 @@
             overflow: hidden;
         }
         .table-scroll-wrapper { max-height: 65vh; overflow-y: auto; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th, td { padding: 12px 16px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--border-color); }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: auto; }
+        th, td { 
+            padding: 12px 16px; 
+            text-align: left; 
+            white-space: nowrap; 
+            border-bottom: 1px solid var(--border-color); 
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
         thead {
             position: sticky; top: 0; z-index: 10;
             background: var(--card-bg);
@@ -308,26 +396,18 @@
         tbody tr:nth-child(even) { background-color: rgba(0,0,0,0.02); }
         body.dark-theme tbody tr:nth-child(even) { background-color: rgba(255,255,255,0.02); }
         
-        /* Badges de Operação */
-        .badge {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 11px;
-            text-transform: uppercase;
-        }
+        /* Badges */
+        .badge { padding: 4px 8px; border-radius: 12px; font-weight: 600; font-size: 11px; text-transform: uppercase; }
         .badge-venda { background-color: rgba(16, 185, 129, 0.15); color: #10b981; }
         .badge-compra { background-color: rgba(59, 130, 246, 0.15); color: #3b82f6; }
         .badge-devolucao { background-color: rgba(245, 158, 11, 0.15); color: #f59e0b; }
         .badge-transf { background-color: rgba(107, 114, 128, 0.15); color: #6b7280; }
         .badge-default { background-color: rgba(239, 68, 68, 0.1); color: var(--text-secondary); }
 
-        /* Colunas Financeiras Específicas */
         .text-mono { font-family: 'Consolas', monospace; }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
 
-        /* --- Componentes da Tabela --- */
         .action-btn {
             display: inline-flex; align-items: center; justify-content: center;
             width: 28px; height: 28px;
@@ -337,27 +417,17 @@
         }
         .action-btn:hover { background: var(--hover-bg); color: var(--primary-color); }
         .action-btn svg { width: 14px; height: 14px; }
+        
         .tag { font-size: 11px; background-color: var(--header-bg); color: var(--header-text); padding: 2px 6px; border-radius: 4px; }
         
-        /* --- Empty State --- */
+        /* Empty State */
         .empty-state-container {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             padding: 80px 20px; text-align: center;
         }
         .empty-state-container svg { width: 60px; height: 60px; color: var(--border-color); margin-bottom: 16px; }
-        .empty-state-container h3 { margin: 0 0 8px; font-size: 16px; font-weight: 600; }
-        .empty-state-container p { color: var(--text-secondary); margin: 0; font-size: 13px; }
 
-        /* --- Busca e Ordenação --- */
-        .search-input {
-            width: 100%; max-width: 400px;
-            padding: 10px 16px; margin-bottom: 16px;
-            border-radius: 8px; border: 1px solid var(--border-color);
-            background-color: var(--card-bg); color: var(--text-color);
-            font-size: 14px;
-        }
-
-        /* --- Segmented Control --- */
+        /* Segmented Control */
         .segment-control {
             display: flex; gap: 4px; margin-bottom: 16px;
             background-color: var(--segment-control-bg);
@@ -370,12 +440,11 @@
         }
         .segment-btn:hover { color: var(--text-color); }
         .segment-btn.active {
-            background-color: var(--card-bg);
-            color: var(--text-color);
+            background-color: var(--card-bg); color: var(--text-color);
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         
-        /* --- Theme Switch --- */
+        /* Theme Switch */
         .theme-switch-wrapper { display: flex; align-items: center; }
         .theme-switch { display: inline-block; height: 24px; position: relative; width: 44px; }
         .theme-switch input { display:none; }
@@ -385,7 +454,7 @@
         input:checked + .slider:before { transform: translateX(20px); }
         .theme-switch-wrapper span { margin-left: 10px; font-size: 13px; font-weight: 500; }
         
-        /* --- Modal de Configuração --- */
+        /* --- Modais --- */
         .modal-backdrop {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); z-index: 9999;
@@ -395,18 +464,29 @@
         .modal-content {
             background: var(--card-bg); padding: 24px; border-radius: 12px;
             width: 400px; max-width: 90%; border: 1px solid var(--border-color);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            max-height: 80vh; display: flex; flex-direction: column;
         }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .modal-header h3 { margin: 0; font-size: 18px; }
         .close-modal { background: none; border: none; cursor: pointer; font-size: 20px; color: var(--text-secondary); }
-        .kpi-options { display: flex; flex-direction: column; gap: 12px; max-height: 400px; overflow-y: auto; }
-        .checkbox-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; user-select: none; }
+        .modal-body { overflow-y: auto; flex: 1; padding-right: 8px; }
         
-        /* --- Charts Container --- */
-        #charts-container { display: none; margin-bottom: 40px; }
+        .checkbox-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; user-select: none; margin-bottom: 12px; }
+        
+        /* Upload Status Items */
+        .upload-status-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px; border-bottom: 1px solid var(--border-color);
+            font-size: 13px;
+        }
+        .upload-status-item:last-child { border-bottom: none; }
+        .status-icon { margin-left: 10px; }
+        .status-icon.loading { color: var(--info-color); animation: spin 1s linear infinite; }
+        .status-icon.success { color: var(--success-color); }
+        .status-icon.error { color: var(--primary-color); }
 
-        /* --- Toast --- */
+        /* Toast */
         .toast-container {
             position: fixed; bottom: 24px; right: 24px; z-index: 10000;
             display: flex; flex-direction: column; gap: 12px;
@@ -496,9 +576,6 @@
             </div>
         </div>
 
-        <div id="charts-container">
-            </div>
-
         <div class="filter-bar">
             <div class="filter-group">
                 <label for="start-date">De:</label>
@@ -508,35 +585,46 @@
                 <label for="end-date">Até:</label>
                 <input type="date" id="end-date">
             </div>
+            
+            <!-- Multi-Select: Operação -->
             <div class="filter-group">
-                <label for="category-filter">Operação:</label>
-                <select id="category-filter">
-                    <option value="">Todas</option>
-                    <option value="Venda">Venda</option>
-                    <option value="Compra">Compra</option>
-                    <option value="Devolução">Devolução</option>
-                    <option value="Transferência">Transferência</option>
-                </select>
+                <label>Operação:</label>
+                <div class="custom-select-btn" id="btn-category-filter">Selecionar...</div>
+                <div class="dropdown-content" id="dropdown-category-filter">
+                    <div class="dropdown-item"><input type="checkbox" value="Venda" checked> Venda</div>
+                    <div class="dropdown-item"><input type="checkbox" value="Compra" checked> Compra</div>
+                    <div class="dropdown-item"><input type="checkbox" value="Devolução" checked> Devolução</div>
+                    <div class="dropdown-item"><input type="checkbox" value="Transferência" checked> Transferência</div>
+                </div>
             </div>
+
             <div class="filter-group">
                 <label for="cfop-filter">CFOP:</label>
                 <input type="text" id="cfop-filter" placeholder="Ex: 5102">
             </div>
+
+            <!-- Multi-Select: Transportadora -->
             <div class="filter-group">
-                <label for="transportadora-filter">Transportadora:</label>
-                <select id="transportadora-filter">
-                    <option value="">Todas</option>
-                    </select>
+                <label>Transportadora:</label>
+                <div class="custom-select-btn" id="btn-transportadora-filter">Selecionar...</div>
+                <div class="dropdown-content" id="dropdown-transportadora-filter">
+                    <input type="text" class="search-in-dropdown" placeholder="Buscar..." onkeyup="filterDropdown(this, 'dropdown-transportadora-filter')">
+                    <div id="list-transportadora-filter"></div>
+                </div>
             </div>
+
+            <!-- Multi-Select: Destinatário -->
             <div class="filter-group">
-                <label for="destinatario-filter">Destinatário:</label>
-                <select id="destinatario-filter">
-                    <option value="">Todos</option>
-                    </select>
+                <label>Destinatário:</label>
+                <div class="custom-select-btn" id="btn-destinatario-filter">Selecionar...</div>
+                <div class="dropdown-content" id="dropdown-destinatario-filter">
+                    <input type="text" class="search-in-dropdown" placeholder="Buscar..." onkeyup="filterDropdown(this, 'dropdown-destinatario-filter')">
+                    <div id="list-destinatario-filter"></div>
+                </div>
             </div>
 
             <div class="filter-actions">
-                <button id="apply-filter-btn">Filtrar</button>
+                <button id="apply-filter-btn" class="action-btn-main">Filtrar</button>
                 <button id="clear-filter-btn" title="Limpar Filtros"><i class="fas fa-times"></i></button>
                 <button id="manual-refresh-btn" class="refresh-btn" title="Atualizar Dados Agora">
                     <i class="fas fa-sync-alt" id="refresh-icon"></i>
@@ -553,32 +641,21 @@
         </div>
 
         <div id="consolidated-view" class="view-content active">
-            <input type="text" id="search-consolidated" class="search-input" placeholder="🔍 Buscar no relatório (Chave, Cliente, Valor)...">
+            <div class="table-toolbar">
+                <input type="text" id="search-consolidated" class="search-input" placeholder="🔍 Buscar no relatório (Chave, Cliente, Valor)...">
+                <button id="col-settings-btn" class="config-btn">
+                    <i class="fas fa-columns"></i> Colunas
+                </button>
+            </div>
             <div class="data-table-container">
                 <div class="table-scroll-wrapper">
                     <table id="table-consolidated">
-                        <thead>
-                            <tr>
-                                <th class="sortable">Data Emissão</th>
-                                <th class="sortable">Chave NF-e</th>
-                                <th class="sortable">Destinatário</th>
-                                <th class="sortable">Operação</th>
-                                <th class="sortable">CFOP</th>
-                                <th class="sortable">Vol.</th>
-                                <th class="sortable">Espécie</th>
-                                <th class="sortable text-right">Valor Nota</th>
-                                <th class="sortable text-right">Peso (Ton)</th>
-                                <th class="sortable text-right">Frete Total</th>
-                                <th class="sortable text-right">% Fr/NF</th>
-                                <th class="sortable text-right">Agen.</th>
-                                <th class="sortable text-right">Reent.</th>
-                                <th class="sortable text-right">Pedágio</th>
-                                <th class="sortable text-center">CTEs</th>
-                                <th>Ações</th>
-                            </tr>
+                        <thead id="consolidated-table-head">
+                            <!-- Headers generated dynamically via JS -->
                         </thead>
                         <tbody id="consolidated-table-body">
-                            </tbody>
+                            <!-- Rows generated dynamically via JS -->
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -606,23 +683,50 @@
                             </tr>
                         </thead>
                         <tbody id="raw-data-table-body">
-                            </tbody>
+                        </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Toast Container -->
     <div class="toast-container" id="toast-container"></div>
 
+    <!-- Modal: KPIs -->
     <div class="modal-backdrop" id="kpi-modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Visibilidade de KPIs</h3>
                 <button class="close-modal" id="close-kpi-modal">&times;</button>
             </div>
-            <div class="kpi-options" id="kpi-options-container">
-                </div>
+            <div class="modal-body" id="kpi-options-container"></div>
+        </div>
+    </div>
+
+    <!-- Modal: Configuração de Colunas -->
+    <div class="modal-backdrop" id="column-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Configurar Colunas</h3>
+                <button class="close-modal" id="close-column-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="column-options-container">
+                <!-- Checkboxes generated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Status de Upload -->
+    <div class="modal-backdrop" id="upload-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Processando Arquivos</h3>
+                <button class="close-modal" id="close-upload-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="upload-status-list">
+                <!-- Status items here -->
+            </div>
         </div>
     </div>
 
@@ -635,6 +739,27 @@
         const N8N_QUEUE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/receber-xml';
         const N8N_DELETE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/excluir-registro-relatorio-cte';
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // --- DEFINIÇÕES DE COLUNAS ---
+        const AVAILABLE_COLUMNS = [
+            { id: 'data', label: 'Data Emissão', sortable: true, default: true },
+            { id: 'chave', label: 'Chave NF-e', sortable: true, default: true },
+            { id: 'destinatario', label: 'Destinatário', sortable: true, default: true },
+            { id: 'transportadora', label: 'Transportadora', sortable: true, default: true },
+            { id: 'operacao', label: 'Operação', sortable: true, default: true },
+            { id: 'cfop', label: 'CFOP', sortable: true, default: true },
+            { id: 'volumes', label: 'Vol.', sortable: true, default: true },
+            { id: 'especie', label: 'Espécie', sortable: true, default: true },
+            { id: 'valor_nota', label: 'Valor Nota', sortable: true, align: 'right', default: true },
+            { id: 'peso', label: 'Peso (Ton)', sortable: true, align: 'right', default: true },
+            { id: 'frete_total', label: 'Frete Total', sortable: true, align: 'right', default: true },
+            { id: 'perc_frete', label: '% Fr/NF', sortable: true, align: 'right', default: true },
+            { id: 'agendamento', label: 'Agen.', sortable: true, align: 'right', default: true },
+            { id: 'reentrega', label: 'Reent.', sortable: true, align: 'right', default: true },
+            { id: 'pedagio', label: 'Pedágio', sortable: true, align: 'right', default: true },
+            { id: 'ctes', label: 'CTEs', sortable: true, align: 'center', default: true },
+            { id: 'acoes', label: 'Ações', sortable: false, align: 'center', default: true }
+        ];
 
         // --- UTILS & DEBOUNCE ---
         function debounce(func, timeout = 2000){
@@ -654,15 +779,120 @@
         const formatCurrency = (val) => (val || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const formatCurrencyOrDash = (val) => (val && val !== 0) ? val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '<span style="color:var(--text-secondary); opacity:0.5;">--</span>';
         const formatDecimal = (val) => (val || 0).toFixed(3).replace('.',',');
-        
+
         // --- STATE MANAGEMENT ---
         const consolidatedTableBody = document.getElementById('consolidated-table-body');
+        const consolidatedTableHead = document.getElementById('consolidated-table-head');
         const rawDataTableBody = document.getElementById('raw-data-table-body');
-        let consolidatedDataCache = []; // Cache local para filtros e exportação
+        let consolidatedDataCache = [];
         let rawDataSource = [];
         let currentRawDataFilter = 'all';
 
-        // --- SISTEMA DE VISIBILIDADE DE KPI (LocalStorage) ---
+        // --- MULTI-SELECT FILTER LOGIC ---
+        function setupMultiSelects() {
+            // Toggle Logic
+            ['category-filter', 'transportadora-filter', 'destinatario-filter'].forEach(id => {
+                const btn = document.getElementById(`btn-${id}`);
+                const content = document.getElementById(`dropdown-${id}`);
+                
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.querySelectorAll('.dropdown-content').forEach(d => {
+                        if (d !== content) d.classList.remove('show');
+                    });
+                    content.classList.toggle('show');
+                });
+            });
+
+            // Close when clicking outside
+            window.addEventListener('click', () => {
+                document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+            });
+
+            // Stop propagation inside dropdown
+            document.querySelectorAll('.dropdown-content').forEach(d => {
+                d.addEventListener('click', (e) => e.stopPropagation());
+            });
+        }
+        setupMultiSelects();
+
+        function getSelectedOptions(filterId) {
+            const container = document.getElementById(`dropdown-${filterId}`);
+            const checkboxes = container.querySelectorAll('input[type="checkbox"]:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+
+        function updateSelectButtonLabel(filterId, allText = 'Todas') {
+            const container = document.getElementById(`dropdown-${filterId}`);
+            const total = container.querySelectorAll('input[type="checkbox"]').length;
+            const checked = container.querySelectorAll('input[type="checkbox"]:checked').length;
+            const btn = document.getElementById(`btn-${filterId}`);
+            
+            if (checked === 0) btn.textContent = 'Nenhuma Selecionada';
+            else if (checked === total) btn.textContent = allText;
+            else btn.textContent = `${checked} Selecionado(s)`;
+        }
+
+        window.filterDropdown = function(input, dropdownId) {
+            const filter = input.value.toLowerCase();
+            const div = document.getElementById(dropdownId);
+            const items = div.getElementsByClassName("dropdown-item");
+            for (let i = 0; i < items.length; i++) {
+                const txtValue = items[i].textContent || items[i].innerText;
+                if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                    items[i].style.display = "";
+                } else {
+                    items[i].style.display = "none";
+                }
+            }
+        };
+
+        // --- COLUMN VISIBILITY MANAGEMENT ---
+        function loadColumnSettings() {
+            const saved = localStorage.getItem('fama_col_settings');
+            if (saved) return JSON.parse(saved);
+            return AVAILABLE_COLUMNS.filter(c => c.default).map(c => c.id);
+        }
+
+        function saveColumnSettings(cols) {
+            localStorage.setItem('fama_col_settings', JSON.stringify(cols));
+            refreshDashboard(false); // Re-render without fetching
+        }
+
+        function setupColumnModal() {
+            const container = document.getElementById('column-options-container');
+            const currentCols = loadColumnSettings();
+            
+            container.innerHTML = '';
+            AVAILABLE_COLUMNS.forEach(col => {
+                const div = document.createElement('div');
+                div.className = 'checkbox-label';
+                div.innerHTML = `
+                    <input type="checkbox" id="col-chk-${col.id}" value="${col.id}" ${currentCols.includes(col.id) ? 'checked' : ''}>
+                    <label for="col-chk-${col.id}">${col.label}</label>
+                `;
+                container.appendChild(div);
+            });
+
+            const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(chk => {
+                chk.addEventListener('change', () => {
+                    const newCols = Array.from(checkboxes).filter(c => c.checked).map(c => c.value);
+                    saveColumnSettings(newCols);
+                });
+            });
+        }
+
+        document.getElementById('col-settings-btn').addEventListener('click', () => {
+            setupColumnModal();
+            document.getElementById('column-modal').classList.add('active');
+        });
+        document.getElementById('close-column-modal').addEventListener('click', () => {
+            document.getElementById('column-modal').classList.remove('active');
+        });
+
+
+        // --- KPI VISIBILITY MANAGEMENT ---
         const kpiMap = [
             { id: 'custo-total', label: 'Custo Total (Mês)' },
             { id: 'perc-frete', label: '% Frete s/ Nota' },
@@ -676,7 +906,7 @@
 
         function loadKpiPreferences() {
             const saved = localStorage.getItem('kpi_prefs');
-            return saved ? JSON.parse(saved) : kpiMap.map(k => k.id); // Default: todos visíveis
+            return saved ? JSON.parse(saved) : kpiMap.map(k => k.id);
         }
 
         function saveKpiPreferences(prefs) {
@@ -699,7 +929,6 @@
         function setupKpiModal() {
             const container = document.getElementById('kpi-options-container');
             const currentPrefs = loadKpiPreferences();
-            
             container.innerHTML = '';
             kpiMap.forEach(kpi => {
                 const div = document.createElement('div');
@@ -710,7 +939,6 @@
                 `;
                 container.appendChild(div);
             });
-
             const checkboxes = container.querySelectorAll('input[type="checkbox"]');
             checkboxes.forEach(chk => {
                 chk.addEventListener('change', () => {
@@ -728,7 +956,7 @@
             document.getElementById('kpi-modal').classList.remove('active');
         });
 
-        // --- RENDER TABLES & BADGES ---
+        // --- RENDER HELPERS ---
         function getCategoryBadge(category) {
             if (!category) return '<span class="badge badge-default">--</span>';
             const lower = category.toLowerCase();
@@ -739,9 +967,9 @@
             return `<span class="badge badge-default">${category}</span>`;
         }
 
-        function renderEmptyState(tbody, message) {
+        function renderEmptyState(tbody, message, colspan) {
             tbody.innerHTML = `
-                <tr><td colspan="100%" class="empty-state-container">
+                <tr><td colspan="${colspan}" class="empty-state-container">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125V6.375c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v.001c0 .621.504 1.125 1.125 1.125z" />
                     </svg>
@@ -752,7 +980,6 @@
         // --- LOGICA DE DADOS ---
         function updateKpis(data) {
             if (!data || data.length === 0) {
-                // Reset all to zero
                 ['kpi-custo-total', 'kpi-custo-ton', 'kpi-taxas-extras', 'kpi-valor-notas'].forEach(id => document.getElementById(id).textContent = 'R$ 0,00');
                 ['kpi-perc-frete'].forEach(id => document.getElementById(id).textContent = '0,00%');
                 ['kpi-nfes-processadas', 'kpi-ctes-pendentes'].forEach(id => document.getElementById(id).textContent = '0');
@@ -782,42 +1009,52 @@
             document.getElementById('kpi-ctes-pendentes').textContent = totals.ctesPendentes;
         }
 
-        // Popula os filtros dinâmicos sem duplicar
         function populateDynamicFilters(data) {
-            const transpSelect = document.getElementById('transportadora-filter');
-            const destSelect = document.getElementById('destinatario-filter');
-            
-            // Salva seleções atuais
-            const currentTransp = transpSelect.value;
-            const currentDest = destSelect.value;
+            const createCheckboxItem = (value, containerId) => {
+                const div = document.createElement('div');
+                div.className = 'dropdown-item';
+                div.innerHTML = `<input type="checkbox" value="${value}" checked> ${value}`;
+                return div;
+            };
 
             const transportadoras = new Set();
             const destinatarios = new Set();
-
             data.forEach(item => {
                 if(item.nome_transportadora) transportadoras.add(item.nome_transportadora);
                 if(item.cliente_destinatario) destinatarios.add(item.cliente_destinatario);
             });
 
-            // Rebuild Transportadora
-            transpSelect.innerHTML = '<option value="">Todas</option>';
+            // Transportadora
+            const tContainer = document.getElementById('list-transportadora-filter');
+            // Save current selection if exists
+            const currentT = getSelectedOptions('transportadora-filter');
+            const hasCurrentT = currentT.length > 0;
+            
+            tContainer.innerHTML = '';
             Array.from(transportadoras).sort().forEach(t => {
-                const opt = document.createElement('option');
-                opt.value = t;
-                opt.textContent = t;
-                transpSelect.appendChild(opt);
+                const div = createCheckboxItem(t);
+                if (hasCurrentT && !currentT.includes(t)) div.querySelector('input').checked = false;
+                tContainer.appendChild(div);
             });
-            transpSelect.value = currentTransp;
+            updateSelectButtonLabel('transportadora-filter', 'Todas');
 
-            // Rebuild Destinatario
-            destSelect.innerHTML = '<option value="">Todos</option>';
+            // Destinatario
+            const dContainer = document.getElementById('list-destinatario-filter');
+            const currentD = getSelectedOptions('destinatario-filter');
+            const hasCurrentD = currentD.length > 0;
+
+            dContainer.innerHTML = '';
             Array.from(destinatarios).sort().forEach(d => {
-                const opt = document.createElement('option');
-                opt.value = d;
-                opt.textContent = d;
-                destSelect.appendChild(opt);
+                const div = createCheckboxItem(d);
+                if (hasCurrentD && !currentD.includes(d)) div.querySelector('input').checked = false;
+                dContainer.appendChild(div);
             });
-            destSelect.value = currentDest;
+            updateSelectButtonLabel('destinatario-filter', 'Todos');
+
+            // Add Event Listeners for checkboxes to update label
+            document.querySelectorAll('#dropdown-transportadora-filter input').forEach(i => i.addEventListener('change', () => updateSelectButtonLabel('transportadora-filter')));
+            document.querySelectorAll('#dropdown-category-filter input').forEach(i => i.addEventListener('change', () => updateSelectButtonLabel('category-filter')));
+            document.querySelectorAll('#dropdown-destinatario-filter input').forEach(i => i.addEventListener('change', () => updateSelectButtonLabel('destinatario-filter')));
         }
 
         async function fetchAndRenderConsolidatedData(filters) {
@@ -825,11 +1062,17 @@
             
             if (filters.startDate) query = query.gte('data_emissao_nfe', filters.startDate);
             if (filters.endDate) query = query.lte('data_emissao_nfe', filters.endDate);
-            if (filters.category) query = query.eq('categoria_frete', filters.category);
             if (filters.cfop) query = query.like('cfop_original', `%${filters.cfop}%`);
-            // Filtros de seleção exata para os dropdowns
-            if (filters.transportadora) query = query.eq('nome_transportadora', filters.transportadora);
-            if (filters.destinatario) query = query.eq('cliente_destinatario', filters.destinatario);
+            
+            // Multi-select filters use .in()
+            const categories = getSelectedOptions('category-filter');
+            if (categories.length > 0) query = query.in('categoria_frete', categories);
+
+            const carriers = getSelectedOptions('transportadora-filter');
+            if (carriers.length > 0) query = query.in('nome_transportadora', carriers);
+
+            const clients = getSelectedOptions('destinatario-filter');
+            if (clients.length > 0) query = query.in('cliente_destinatario', clients);
 
             const { data, error } = await query;
             if (error) { 
@@ -838,41 +1081,63 @@
                 return; 
             }
 
-            consolidatedDataCache = data || []; // Cache para exportação
+            consolidatedDataCache = data || [];
             updateKpis(data);
             
-            // Popula filtros APENAS se não houver filtros ativos (para não reduzir as opções enquanto o usuário navega)
-            // Ou podemos popular sempre com base nos dados totais se buscarmos tudo, mas aqui buscamos filtrado.
-            // Estratégia: Se for busca "limpa", popula os filtros.
-            const isCleanSearch = !filters.category && !filters.cfop && !filters.transportadora && !filters.destinatario && !filters.startDate;
-            if(isCleanSearch) populateDynamicFilters(data);
+            // Only re-populate filters if it's a "clean" fetch (optional strategy, here we just populate if empty or first load)
+            const tContainer = document.getElementById('list-transportadora-filter');
+            if(tContainer.children.length === 0) populateDynamicFilters(data);
 
+            renderConsolidatedTable();
+        }
+
+        function renderConsolidatedTable() {
+            const data = consolidatedDataCache;
+            const visibleCols = loadColumnSettings();
+            
+            // 1. Render Header
+            consolidatedTableHead.innerHTML = '';
+            const trHead = document.createElement('tr');
+            AVAILABLE_COLUMNS.forEach(col => {
+                if (visibleCols.includes(col.id)) {
+                    const th = document.createElement('th');
+                    th.className = col.sortable ? 'sortable' : '';
+                    if (col.align) th.className += ` text-${col.align}`;
+                    th.textContent = col.label;
+                    trHead.appendChild(th);
+                }
+            });
+            consolidatedTableHead.appendChild(trHead);
+
+            // 2. Render Body
+            consolidatedTableBody.innerHTML = '';
             if (!data || data.length === 0) {
-                renderEmptyState(consolidatedTableBody, "Nenhum dado encontrado para os filtros selecionados.");
+                renderEmptyState(consolidatedTableBody, "Nenhum dado encontrado.", visibleCols.length);
                 return;
             }
-            
-            consolidatedTableBody.innerHTML = '';
+
             data.forEach(item => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${new Date(item.data_emissao_nfe).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>
-                    <td><span title="${item.chave_nfe}">${item.chave_nfe.substring(0, 20)}...</span></td>
-                    <td>${item.cliente_destinatario || '--'}</td>
-                    <td>${getCategoryBadge(item.categoria_frete)}</td>
-                    <td>${item.cfop_original || '--'}</td>
-                    <td>${item.quantidade_volumes || '--'}</td>
-                    <td>${item.especie || '--'}</td>
-                    <td class="text-right text-mono">${formatCurrency(item.valor_nota)}</td>
-                    <td class="text-right text-mono">${formatDecimal(item.peso_ton)}</td>
-                    <td class="text-right text-mono" style="font-weight:600;">${formatCurrency(item.custo_frete)}</td>
-                    <td class="text-right text-mono">${(item.percentual_frete_nota || 0).toFixed(2).replace('.',',')}%</td>
-                    
-                    <td class="text-right text-mono">${formatCurrencyOrDash(item.valor_agendamento)}</td>
-                    <td class="text-right text-mono">${formatCurrencyOrDash(item.valor_reentrega)}</td>
-                    <td class="text-right text-mono">${formatCurrencyOrDash(item.valor_pedagio)}</td>
-                    
-                    <td class="text-center">${item.qtd_ctes || 0}</td>
+                let html = '';
+                
+                if(visibleCols.includes('data')) html += `<td>${new Date(item.data_emissao_nfe).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>`;
+                if(visibleCols.includes('chave')) html += `<td><span title="${item.chave_nfe}">${item.chave_nfe.substring(0, 20)}...</span></td>`;
+                if(visibleCols.includes('destinatario')) html += `<td>${item.cliente_destinatario || '--'}</td>`;
+                if(visibleCols.includes('transportadora')) html += `<td>${item.nome_transportadora || '--'}</td>`;
+                if(visibleCols.includes('operacao')) html += `<td>${getCategoryBadge(item.categoria_frete)}</td>`;
+                if(visibleCols.includes('cfop')) html += `<td>${item.cfop_original || '--'}</td>`;
+                if(visibleCols.includes('volumes')) html += `<td>${item.quantidade_volumes || '--'}</td>`;
+                if(visibleCols.includes('especie')) html += `<td>${item.especie || '--'}</td>`;
+                if(visibleCols.includes('valor_nota')) html += `<td class="text-right text-mono">${formatCurrency(item.valor_nota)}</td>`;
+                if(visibleCols.includes('peso')) html += `<td class="text-right text-mono">${formatDecimal(item.peso_ton)}</td>`;
+                if(visibleCols.includes('frete_total')) html += `<td class="text-right text-mono" style="font-weight:600;">${formatCurrency(item.custo_frete)}</td>`;
+                if(visibleCols.includes('perc_frete')) html += `<td class="text-right text-mono">${(item.percentual_frete_nota || 0).toFixed(2).replace('.',',')}%</td>`;
+                if(visibleCols.includes('agendamento')) html += `<td class="text-right text-mono">${formatCurrencyOrDash(item.valor_agendamento)}</td>`;
+                if(visibleCols.includes('reentrega')) html += `<td class="text-right text-mono">${formatCurrencyOrDash(item.valor_reentrega)}</td>`;
+                if(visibleCols.includes('pedagio')) html += `<td class="text-right text-mono">${formatCurrencyOrDash(item.valor_pedagio)}</td>`;
+                if(visibleCols.includes('ctes')) html += `<td class="text-center">${item.qtd_ctes || 0}</td>`;
+                if(visibleCols.includes('acoes')) {
+                    html += `
                     <td>
                         <button class="action-btn" title="Visualizar XML Principal" onclick="window.viewDetails('${item.link_xml_principal}')">
                             <i class="fas fa-file-code"></i>
@@ -880,14 +1145,15 @@
                         <button class="action-btn" title="Excluir do Relatório" onclick="window.deleteRecord('${item.chave_nfe}')">
                             <i class="fas fa-trash"></i>
                         </button>
-                    </td>
-                `;
+                    </td>`;
+                }
+                
+                tr.innerHTML = html;
                 consolidatedTableBody.appendChild(tr);
             });
         }
 
         async function fetchAndRenderRawData(startDate, endDate) {
-            // Lógica mantida da versão anterior
             let ctesQuery = supabase.from('ctes_processados').select('*').order('created_at', { ascending: false });
             let nfesQuery = supabase.from('nfes_processadas').select('*').order('created_at', { ascending: false });
 
@@ -914,7 +1180,7 @@
         function renderRawDataTable() {
             const filteredData = rawDataSource.filter(item => currentRawDataFilter === 'all' || item.type === currentRawDataFilter);
             if (filteredData.length === 0) {
-                renderEmptyState(rawDataTableBody, "Nenhum documento processado encontrado.");
+                renderEmptyState(rawDataTableBody, "Nenhum documento encontrado.", 7);
                 return;
             }
             rawDataTableBody.innerHTML = '';
@@ -942,7 +1208,6 @@
                 return;
             }
             
-            // Mapeia os dados para um formato amigável
             const dataToExport = consolidatedDataCache.map(item => ({
                 'Data Emissão': new Date(item.data_emissao_nfe).toLocaleDateString('pt-BR'),
                 'Chave NFe': item.chave_nfe,
@@ -956,7 +1221,7 @@
                 'Valor Nota': item.valor_nota,
                 'Peso (Ton)': item.peso_ton,
                 'Custo Frete': item.custo_frete,
-                '% Frete': (item.percentual_frete_nota || 0) / 100, // Formato decimal para excel
+                '% Frete': (item.percentual_frete_nota || 0) / 100,
                 'Valor Agendamento': item.valor_agendamento,
                 'Valor Reentrega': item.valor_reentrega,
                 'Valor Pedágio': item.valor_pedagio,
@@ -973,14 +1238,17 @@
         // --- ACTIONS & REFRESH ---
         const debouncedRefresh = debounce(refreshDashboard, 2000);
 
-        async function refreshDashboard() {
+        async function refreshDashboard(shouldFetch = true) {
+            if (!shouldFetch) {
+                renderConsolidatedTable();
+                return;
+            }
+            
             const filters = {
                 startDate: document.getElementById('start-date').value,
                 endDate: document.getElementById('end-date').value,
-                category: document.getElementById('category-filter').value,
-                cfop: document.getElementById('cfop-filter').value.trim(),
-                transportadora: document.getElementById('transportadora-filter').value,
-                destinatario: document.getElementById('destinatario-filter').value
+                cfop: document.getElementById('cfop-filter').value.trim()
+                // other filters are grabbed inside fetchAndRenderConsolidatedData via getSelectedOptions
             };
             
             try {
@@ -995,14 +1263,16 @@
         }
 
         // Event Listeners
-        document.getElementById('apply-filter-btn').addEventListener('click', () => {
-            refreshDashboard();
-        });
-        document.getElementById('manual-refresh-btn').addEventListener('click', refreshDashboard);
+        document.getElementById('apply-filter-btn').addEventListener('click', () => refreshDashboard());
+        document.getElementById('manual-refresh-btn').addEventListener('click', () => refreshDashboard());
         document.getElementById('export-excel-btn').addEventListener('click', exportToExcel);
         
         document.getElementById('clear-filter-btn').addEventListener('click', () => {
-            document.querySelectorAll('.filter-bar input, .filter-bar select').forEach(el => el.value = '');
+            document.getElementById('start-date').value = '';
+            document.getElementById('end-date').value = '';
+            document.getElementById('cfop-filter').value = '';
+            document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = true);
+            ['category-filter', 'transportadora-filter', 'destinatario-filter'].forEach(id => updateSelectButtonLabel(id));
             refreshDashboard();
             showToast('Filtros limpos.', 'success');
         });
@@ -1028,9 +1298,14 @@
             }
         });
 
-        // --- UPLOAD LOGIC ---
+        // --- UPLOAD LOGIC & REALTIME MODAL ---
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
+        const uploadModal = document.getElementById('upload-modal');
+        const uploadStatusList = document.getElementById('upload-status-list');
+        const closeUploadModalBtn = document.getElementById('close-upload-modal');
+
+        closeUploadModalBtn.addEventListener('click', () => uploadModal.classList.remove('active'));
         
         document.getElementById('upload-link').addEventListener('click', (e) => { e.preventDefault(); fileInput.click(); });
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
@@ -1038,22 +1313,44 @@
         
         const handleFileUpload = async (files) => {
             if (files.length === 0) return;
-            dropZone.classList.add('processing');
-            showToast(`Enviando ${files.length} arquivo(s)...`, 'success');
-            try {
-                const uploads = Array.from(files).map(file => {
+            
+            uploadStatusList.innerHTML = '';
+            uploadModal.classList.add('active');
+            
+            const fileArray = Array.from(files);
+            
+            // Create status items
+            fileArray.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'upload-status-item';
+                item.id = `upload-item-${index}`;
+                item.innerHTML = `
+                    <span>${file.name}</span>
+                    <i class="fas fa-spinner status-icon loading"></i>
+                `;
+                uploadStatusList.appendChild(item);
+            });
+
+            // Process uploads
+            const uploads = fileArray.map(async (file, index) => {
+                const itemIcon = document.querySelector(`#upload-item-${index} .status-icon`);
+                try {
                     const formData = new FormData();
                     formData.append('file', file);
-                    return fetch(N8N_QUEUE_WEBHOOK, { method: 'POST', body: formData });
-                });
-                await Promise.all(uploads);
-                showToast('Arquivos enviados para processamento.', 'success');
-            } catch (e) {
-                showToast('Erro no envio.', 'error');
-            } finally {
-                dropZone.classList.remove('processing');
-                fileInput.value = '';
-            }
+                    const response = await fetch(N8N_QUEUE_WEBHOOK, { method: 'POST', body: formData });
+                    
+                    if (response.ok) {
+                        itemIcon.className = 'fas fa-check-circle status-icon success';
+                    } else {
+                        throw new Error('Falha no envio');
+                    }
+                } catch (e) {
+                    itemIcon.className = 'fas fa-times-circle status-icon error';
+                }
+            });
+
+            await Promise.all(uploads);
+            fileInput.value = '';
         };
 
         dropZone.addEventListener('drop', (e) => {
