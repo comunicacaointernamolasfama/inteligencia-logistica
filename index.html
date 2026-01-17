@@ -40,7 +40,7 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1600px; /* Aumentado para acomodar novas colunas */
             margin: 0 auto;
             padding: 32px;
         }
@@ -140,13 +140,18 @@
         }
         .filter-group { display: flex; align-items: center; gap: 8px; }
         .filter-bar label { font-weight: 500; font-size: 14px; color: var(--text-secondary); }
-        .filter-bar input[type="date"] {
+        .filter-bar input[type="date"],
+        .filter-bar input[type="text"],
+        .filter-bar select {
             background-color: var(--bg-color);
             color: var(--text-color);
             border: 1px solid var(--border-color);
             border-radius: 6px;
             padding: 8px 12px;
             font-size: 14px;
+        }
+        .filter-bar input[type="text"]#cfop-filter {
+            width: 80px; /* Smaller width for CFOP */
         }
         .filter-bar button {
             padding: 10px 16px;
@@ -180,6 +185,7 @@
             align-items: center;
             justify-content: center;
             font-size: 16px;
+            margin-left: auto; /* Push to the right */
         }
         .refresh-btn:hover {
             border-color: var(--primary-color);
@@ -228,7 +234,7 @@
             border: 1px solid var(--border-color);
             overflow: hidden;
         }
-        .table-scroll-wrapper { max-height: 60vh; overflow-y: auto; }
+        .table-scroll-wrapper { max-height: 60vh; overflow-y: auto; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 16px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--border-color); }
         thead {
@@ -475,6 +481,19 @@
                 <label for="end-date">Até:</label>
                 <input type="date" id="end-date">
             </div>
+            <div class="filter-group">
+                <label for="category-filter">Operação:</label>
+                <select id="category-filter">
+                    <option value="">Todas</option>
+                    <option value="Venda">Venda</option>
+                    <option value="Compra">Compra</option>
+                    <option value="Devolução">Devolução</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="cfop-filter">CFOP:</label>
+                <input type="text" id="cfop-filter" placeholder="Ex: 5102">
+            </div>
             <button id="apply-filter-btn">Aplicar Filtro</button>
             <button id="clear-filter-btn">Limpar / Atualizar</button>
             <button id="manual-refresh-btn" class="refresh-btn" title="Atualizar Dados Agora">
@@ -498,6 +517,10 @@
                                 <th class="sortable">CHAVE NF-E</th>
                                 <th class="sortable">CLIENTE (DESTINATÁRIO)</th>
                                 <th class="sortable">UF</th>
+                                <th class="sortable">OPERAÇÃO</th>
+                                <th class="sortable">CFOP</th>
+                                <th class="sortable">VOLUMES</th>
+                                <th class="sortable">ESPÉCIE</th>
                                 <th class="sortable">VALOR NOTA</th>
                                 <th class="sortable">PESO (TON)</th>
                                 <th class="sortable">CUSTO FRETE</th>
@@ -607,11 +630,12 @@
                 acc.custoTotal += item.custo_frete || 0;
                 acc.valorTotalNota += item.valor_nota || 0;
                 acc.pesoTotalTon += item.peso_ton || 0;
+                acc.custoTaxasExtras += (item.valor_agendamento || 0) + (item.valor_reentrega || 0);
                 if ((item.qtd_ctes || 0) === 0) {
                     acc.ctesPendentes += 1;
                 }
                 return acc;
-            }, { custoTotal: 0, valorTotalNota: 0, pesoTotalTon: 0, ctesPendentes: 0 });
+            }, { custoTotal: 0, valorTotalNota: 0, pesoTotalTon: 0, ctesPendentes: 0, custoTaxasExtras: 0 });
 
             const percentualFreteMedio = totals.valorTotalNota > 0 ? (totals.custoTotal / totals.valorTotalNota) * 100 : 0;
             const custoMedioPorTon = totals.pesoTotalTon > 0 ? totals.custoTotal / totals.pesoTotalTon : 0;
@@ -620,17 +644,20 @@
             document.getElementById('kpi-perc-frete').textContent = `${percentualFreteMedio.toFixed(2).replace('.',',')}%`;
             document.getElementById('kpi-custo-ton').textContent = custoMedioPorTon.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             document.getElementById('kpi-nfes-processadas').textContent = data.length;
-            document.getElementById('kpi-taxas-extras').textContent = 'R$ 0,00'; // Lógica a ser implementada
+            document.getElementById('kpi-taxas-extras').textContent = totals.custoTaxasExtras.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             document.getElementById('kpi-peso-total').textContent = totals.pesoTotalTon.toFixed(3).replace('.',',');
             document.getElementById('kpi-valor-notas').textContent = totals.valorTotalNota.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             document.getElementById('kpi-ctes-pendentes').textContent = totals.ctesPendentes;
         }
         
         // --- LÓGICA DE DADOS ---
-        async function fetchAndRenderConsolidatedData(startDate, endDate) {
+        async function fetchAndRenderConsolidatedData(filters) {
             let query = supabase.from('relatorio_consolidado').select('*').eq('ignorado', false).order('data_emissao_nfe', { ascending: false });
-            if (startDate) query = query.gte('data_emissao_nfe', startDate);
-            if (endDate) query = query.lte('data_emissao_nfe', endDate);
+            
+            if (filters.startDate) query = query.gte('data_emissao_nfe', filters.startDate);
+            if (filters.endDate) query = query.lte('data_emissao_nfe', filters.endDate);
+            if (filters.category) query = query.eq('categoria_frete', filters.category);
+            if (filters.cfop) query = query.like('cfop_original', `%${filters.cfop}%`);
 
             const { data, error } = await query;
             if (error) { 
@@ -654,6 +681,10 @@
                     <td>${item.chave_nfe.substring(0, 20)}...</td>
                     <td>${item.cliente_destinatario || '--'}</td>
                     <td>${item.uf_destino || '--'}</td>
+                    <td>${item.categoria_frete || '--'}</td>
+                    <td>${item.cfop_original || '--'}</td>
+                    <td>${item.quantidade_volumes || '--'}</td>
+                    <td>${item.especie || '--'}</td>
                     <td>${(item.valor_nota || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
                     <td>${(item.peso_ton || 0).toFixed(3).replace('.',',')}</td>
                     <td>${(item.custo_frete || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
@@ -701,7 +732,7 @@
                 ...nfes.map(d => ({ ...d, type: 'NF-e', key: d.chave_acesso_propria, value: d.valor_total_nota, link: d.link_xml, transportadora: d.nome_transportadora || '--', tipo_servico: '--' }))
             ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
             
-            renderRawDataTable(); // Renderiza a tabela com os dados recém-buscados
+            renderRawDataTable();
         }
 
         function renderRawDataTable() {
@@ -742,19 +773,23 @@
         }
         
         // --- FUNÇÃO CENTRAL DE ATUALIZAÇÃO ---
-        const refreshIcon = document.getElementById('refresh-icon');
         const debouncedRefresh = debounce(refreshDashboard, 2000);
         
         async function refreshDashboard() {
-            const startDate = document.getElementById('start-date').value;
-            const endDate = document.getElementById('end-date').value;
-
+            const refreshIcon = document.getElementById('refresh-icon');
             refreshIcon.classList.add('spinning');
 
+            const filters = {
+                startDate: document.getElementById('start-date').value,
+                endDate: document.getElementById('end-date').value,
+                category: document.getElementById('category-filter').value,
+                cfop: document.getElementById('cfop-filter').value.trim()
+            };
+            
             try {
                 await Promise.all([
-                    fetchAndRenderConsolidatedData(startDate, endDate),
-                    fetchAndRenderRawData(startDate, endDate)
+                    fetchAndRenderConsolidatedData(filters),
+                    fetchAndRenderRawData(filters.startDate, filters.endDate)
                 ]);
             } catch (error) {
                 console.error("Erro ao atualizar o dashboard:", error);
@@ -786,6 +821,8 @@
         clearFilterBtn.addEventListener('click', () => {
             document.getElementById('start-date').value = '';
             document.getElementById('end-date').value = '';
+            document.getElementById('category-filter').value = '';
+            document.getElementById('cfop-filter').value = '';
             refreshDashboard();
             showToast('Filtros limpos. Exibindo todos os dados.', 'success');
         });
@@ -877,11 +914,9 @@
         
         // --- LÓGICA DE BUSCA, ORDENAÇÃO E FILTRO DE DADOS BRUTOS ---
         function setupInteractiveElements() {
-            // Busca
             document.getElementById('search-consolidated').addEventListener('keyup', (e) => filterTable(consolidatedTableBody, e.target.value));
             document.getElementById('search-raw').addEventListener('keyup', (e) => filterTable(rawDataTableBody, e.target.value));
             
-            // Ordenação
             document.querySelectorAll('th.sortable').forEach((headerCell) => {
                 headerCell.addEventListener('click', () => {
                     const table = headerCell.closest('table');
@@ -890,7 +925,6 @@
                 });
             });
 
-            // Filtro de Tipo (Dados Brutos)
             const filterContainer = document.getElementById('raw-data-filter');
             filterContainer.addEventListener('click', (e) => {
                 const targetButton = e.target.closest('.segment-btn');
@@ -966,19 +1000,19 @@
 
             setupTabs();
             setupInteractiveElements();
-            refreshDashboard(); // Carga inicial dos dados
+            refreshDashboard();
 
-            // **REALTIME SUBSCRIPTION OTIMIZADA**
             supabase
                 .channel('public-db-changes')
                 .on('postgres_changes', 
                     { event: '*', schema: 'public' }, 
                     (payload) => {
-                        console.log('Realtime change detected:', payload);
-                        if(payload.table === 'relatorio_consolidado') {
-                           showToast('Relatório consolidado atualizado!', 'success');
+                        const relevantTables = ['relatorio_consolidado', 'ctes_processados', 'nfes_processadas'];
+                        if (relevantTables.includes(payload.table)) {
+                            console.log('Realtime change detected in:', payload.table);
+                            showToast(`Dados atualizados em tempo real (${payload.table})!`, 'success');
+                            debouncedRefresh();
                         }
-                        debouncedRefresh();
                     }
                 )
                 .subscribe((status) => {
