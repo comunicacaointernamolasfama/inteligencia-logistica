@@ -4,8 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Análise de Fretes - FAMA</title>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     
+    <!-- Bibliotecas Externas -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
         :root {
             --bg-color: #FFFFFF;
@@ -168,6 +173,20 @@
             margin-top: auto;
         }
         .kpi-card .value.highlight { color: var(--primary-color); }
+
+        /* --- Chart Section --- */
+        #charts-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            margin-bottom: 24px;
+            height: 350px;
+            position: relative;
+            display: none; /* Hidden by default if no data */
+        }
+        #charts-section.active { display: block; }
+        #charts-section h4 { margin: 0 0 16px 0; font-size: 14px; color: var(--text-secondary); text-transform: uppercase; }
 
         /* --- Barra de Filtros Customizada (Multi-Select) --- */
         .filter-bar {
@@ -482,7 +501,7 @@
         }
         .upload-status-item:last-child { border-bottom: none; }
         .status-icon { margin-left: 10px; }
-        .status-icon.loading { color: var(--info-color); animation: spin 1s linear infinite; }
+        .status-icon.loading { color: var(--warning-color); animation: spin 1s linear infinite; }
         .status-icon.success { color: var(--success-color); }
         .status-icon.error { color: var(--primary-color); }
 
@@ -505,8 +524,6 @@
         @keyframes slideOutRight { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
 
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="dark-theme">
 
@@ -641,8 +658,14 @@
         </div>
 
         <div id="consolidated-view" class="view-content active">
+            <!-- Gráfico de Sazonalidade -->
+            <div id="charts-section">
+                <h4><i class="fas fa-chart-line"></i> Evolução do Custo Médio por Tonelada</h4>
+                <canvas id="seasonalityChart"></canvas>
+            </div>
+
             <div class="table-toolbar">
-                <input type="text" id="search-consolidated" class="search-input" placeholder="🔍 Buscar no relatório (Chave, Cliente, Valor)...">
+                <input type="text" id="search-consolidated" class="search-input" placeholder="🔍 Buscar Chave, Cliente, Valor, CNPJ...">
                 <button id="col-settings-btn" class="config-btn">
                     <i class="fas fa-columns"></i> Colunas
                 </button>
@@ -745,11 +768,13 @@
             { id: 'data', label: 'Data Emissão', sortable: true, default: true },
             { id: 'chave', label: 'Chave NF-e', sortable: true, default: true },
             { id: 'destinatario', label: 'Destinatário', sortable: true, default: true },
+            { id: 'cnpj', label: 'CNPJ Dest.', sortable: true, default: false }, // Nova Coluna
             { id: 'transportadora', label: 'Transportadora', sortable: true, default: true },
             { id: 'operacao', label: 'Operação', sortable: true, default: true },
             { id: 'cfop', label: 'CFOP', sortable: true, default: true },
             { id: 'volumes', label: 'Vol.', sortable: true, default: true },
             { id: 'especie', label: 'Espécie', sortable: true, default: true },
+            { id: 'info', label: 'Info. Compl.', sortable: false, default: false }, // Nova Coluna
             { id: 'valor_nota', label: 'Valor Nota', sortable: true, align: 'right', default: true },
             { id: 'peso', label: 'Peso (Ton)', sortable: true, align: 'right', default: true },
             { id: 'frete_total', label: 'Frete Total', sortable: true, align: 'right', default: true },
@@ -762,17 +787,11 @@
         ];
 
         // --- UTILS & DEBOUNCE ---
-        function debounce(func, timeout = 2000){
+        function debounce(func, timeout = 500){
             let timer;
             return (...args) => {
                 clearTimeout(timer);
-                const refreshIcon = document.getElementById('refresh-icon');
-                if(refreshIcon) refreshIcon.classList.add('spinning');
-                timer = setTimeout(() => { 
-                    func.apply(this, args).finally(() => {
-                        if(refreshIcon) refreshIcon.classList.remove('spinning');
-                    }); 
-                }, timeout);
+                timer = setTimeout(() => { func.apply(this, args); }, timeout);
             };
         }
 
@@ -785,12 +804,102 @@
         const consolidatedTableHead = document.getElementById('consolidated-table-head');
         const rawDataTableBody = document.getElementById('raw-data-table-body');
         let consolidatedDataCache = [];
+        let filteredConsolidatedData = []; // Para busca textual local
         let rawDataSource = [];
         let currentRawDataFilter = 'all';
+        let chartInstance = null;
+
+        // --- CHART.JS LOGIC ---
+        function updateChart(data) {
+            const ctx = document.getElementById('seasonalityChart').getContext('2d');
+            const section = document.getElementById('charts-section');
+
+            if (!data || data.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+            section.style.display = 'block';
+
+            // Agrupar por Mês/Ano
+            const grouped = data.reduce((acc, item) => {
+                if (!item.data_emissao_nfe) return acc;
+                const date = new Date(item.data_emissao_nfe);
+                const key = `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                
+                if (!acc[key]) acc[key] = { cost: 0, weight: 0 };
+                acc[key].cost += item.custo_frete || 0;
+                acc[key].weight += item.peso_ton || 0;
+                return acc;
+            }, {});
+
+            // Ordenar labels cronologicamente
+            const sortedKeys = Object.keys(grouped).sort((a, b) => {
+                const [ma, ya] = a.split('/').map(Number);
+                const [mb, yb] = b.split('/').map(Number);
+                return (ya - yb) || (ma - mb);
+            });
+
+            const labels = sortedKeys;
+            const values = sortedKeys.map(key => {
+                const g = grouped[key];
+                return g.weight > 0 ? (g.cost / g.weight) : 0;
+            });
+
+            // Cores do tema
+            const isDark = document.body.classList.contains('dark-theme');
+            const gridColor = isDark ? '#374151' : '#e5e7eb';
+            const textColor = isDark ? '#9ca3af' : '#6b7280';
+            const primaryColor = '#ef4444';
+
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Custo Médio / Ton (R$)',
+                        data: values,
+                        borderColor: primaryColor,
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true,
+                        pointBackgroundColor: primaryColor
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `R$ ${context.parsed.y.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: gridColor },
+                            ticks: { color: textColor }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: textColor }
+                        }
+                    }
+                }
+            });
+        }
 
         // --- MULTI-SELECT FILTER LOGIC ---
         function setupMultiSelects() {
-            // Toggle Logic
             ['category-filter', 'transportadora-filter', 'destinatario-filter'].forEach(id => {
                 const btn = document.getElementById(`btn-${id}`);
                 const content = document.getElementById(`dropdown-${id}`);
@@ -804,12 +913,10 @@
                 });
             });
 
-            // Close when clicking outside
             window.addEventListener('click', () => {
                 document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
             });
 
-            // Stop propagation inside dropdown
             document.querySelectorAll('.dropdown-content').forEach(d => {
                 d.addEventListener('click', (e) => e.stopPropagation());
             });
@@ -856,7 +963,7 @@
 
         function saveColumnSettings(cols) {
             localStorage.setItem('fama_col_settings', JSON.stringify(cols));
-            refreshDashboard(false); // Re-render without fetching
+            renderConsolidatedTable(); 
         }
 
         function setupColumnModal() {
@@ -891,8 +998,7 @@
             document.getElementById('column-modal').classList.remove('active');
         });
 
-
-        // --- KPI VISIBILITY MANAGEMENT ---
+        // --- KPI PREFERENCES ---
         const kpiMap = [
             { id: 'custo-total', label: 'Custo Total (Mês)' },
             { id: 'perc-frete', label: '% Frete s/ Nota' },
@@ -1026,7 +1132,6 @@
 
             // Transportadora
             const tContainer = document.getElementById('list-transportadora-filter');
-            // Save current selection if exists
             const currentT = getSelectedOptions('transportadora-filter');
             const hasCurrentT = currentT.length > 0;
             
@@ -1051,7 +1156,6 @@
             });
             updateSelectButtonLabel('destinatario-filter', 'Todos');
 
-            // Add Event Listeners for checkboxes to update label
             document.querySelectorAll('#dropdown-transportadora-filter input').forEach(i => i.addEventListener('change', () => updateSelectButtonLabel('transportadora-filter')));
             document.querySelectorAll('#dropdown-category-filter input').forEach(i => i.addEventListener('change', () => updateSelectButtonLabel('category-filter')));
             document.querySelectorAll('#dropdown-destinatario-filter input').forEach(i => i.addEventListener('change', () => updateSelectButtonLabel('destinatario-filter')));
@@ -1064,7 +1168,6 @@
             if (filters.endDate) query = query.lte('data_emissao_nfe', filters.endDate);
             if (filters.cfop) query = query.like('cfop_original', `%${filters.cfop}%`);
             
-            // Multi-select filters use .in()
             const categories = getSelectedOptions('category-filter');
             if (categories.length > 0) query = query.in('categoria_frete', categories);
 
@@ -1083,16 +1186,42 @@
 
             consolidatedDataCache = data || [];
             updateKpis(data);
+            updateChart(data);
             
-            // Only re-populate filters if it's a "clean" fetch (optional strategy, here we just populate if empty or first load)
+            // Popula filtros apenas se a lista estiver vazia (primeira carga ou limpeza)
             const tContainer = document.getElementById('list-transportadora-filter');
             if(tContainer.children.length === 0) populateDynamicFilters(data);
 
+            applyTextFilter(); // Filtra localmente baseado no input de texto
+        }
+
+        function applyTextFilter() {
+            const searchText = document.getElementById('search-consolidated').value.toLowerCase();
+            
+            if (!searchText) {
+                filteredConsolidatedData = consolidatedDataCache;
+            } else {
+                filteredConsolidatedData = consolidatedDataCache.filter(item => {
+                    return (
+                        (item.chave_nfe && item.chave_nfe.toLowerCase().includes(searchText)) ||
+                        (item.cliente_destinatario && item.cliente_destinatario.toLowerCase().includes(searchText)) ||
+                        (item.nome_transportadora && item.nome_transportadora.toLowerCase().includes(searchText)) ||
+                        (item.cnpj_destinatario && item.cnpj_destinatario.toLowerCase().includes(searchText)) ||
+                        (item.informacoes_complementares && item.informacoes_complementares.toLowerCase().includes(searchText)) ||
+                        (item.valor_nota && item.valor_nota.toString().includes(searchText))
+                    );
+                });
+            }
             renderConsolidatedTable();
         }
 
+        // Listener para busca textual com debounce
+        document.getElementById('search-consolidated').addEventListener('keyup', debounce(() => {
+            applyTextFilter();
+        }, 300));
+
         function renderConsolidatedTable() {
-            const data = consolidatedDataCache;
+            const data = filteredConsolidatedData;
             const visibleCols = loadColumnSettings();
             
             // 1. Render Header
@@ -1123,11 +1252,13 @@
                 if(visibleCols.includes('data')) html += `<td>${new Date(item.data_emissao_nfe).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>`;
                 if(visibleCols.includes('chave')) html += `<td><span title="${item.chave_nfe}">${item.chave_nfe.substring(0, 20)}...</span></td>`;
                 if(visibleCols.includes('destinatario')) html += `<td>${item.cliente_destinatario || '--'}</td>`;
+                if(visibleCols.includes('cnpj')) html += `<td>${item.cnpj_destinatario || '--'}</td>`;
                 if(visibleCols.includes('transportadora')) html += `<td>${item.nome_transportadora || '--'}</td>`;
                 if(visibleCols.includes('operacao')) html += `<td>${getCategoryBadge(item.categoria_frete)}</td>`;
                 if(visibleCols.includes('cfop')) html += `<td>${item.cfop_original || '--'}</td>`;
                 if(visibleCols.includes('volumes')) html += `<td>${item.quantidade_volumes || '--'}</td>`;
                 if(visibleCols.includes('especie')) html += `<td>${item.especie || '--'}</td>`;
+                if(visibleCols.includes('info')) html += `<td><span title="${item.informacoes_complementares || ''}">${(item.informacoes_complementares || '--').substring(0,30)}...</span></td>`;
                 if(visibleCols.includes('valor_nota')) html += `<td class="text-right text-mono">${formatCurrency(item.valor_nota)}</td>`;
                 if(visibleCols.includes('peso')) html += `<td class="text-right text-mono">${formatDecimal(item.peso_ton)}</td>`;
                 if(visibleCols.includes('frete_total')) html += `<td class="text-right text-mono" style="font-weight:600;">${formatCurrency(item.custo_frete)}</td>`;
@@ -1203,21 +1334,23 @@
 
         // --- EXPORT TO EXCEL ---
         function exportToExcel() {
-            if (!consolidatedDataCache || consolidatedDataCache.length === 0) {
+            if (!filteredConsolidatedData || filteredConsolidatedData.length === 0) {
                 showToast("Não há dados para exportar.", "warning");
                 return;
             }
             
-            const dataToExport = consolidatedDataCache.map(item => ({
+            const dataToExport = filteredConsolidatedData.map(item => ({
                 'Data Emissão': new Date(item.data_emissao_nfe).toLocaleDateString('pt-BR'),
                 'Chave NFe': item.chave_nfe,
                 'Destinatário': item.cliente_destinatario,
+                'CNPJ Dest.': item.cnpj_destinatario,
                 'Transportadora': item.nome_transportadora,
                 'UF': item.uf_destino,
                 'Operação': item.categoria_frete,
                 'CFOP': item.cfop_original,
                 'Volumes': item.quantidade_volumes,
                 'Espécie': item.especie,
+                'Info. Compl.': item.informacoes_complementares,
                 'Valor Nota': item.valor_nota,
                 'Peso (Ton)': item.peso_ton,
                 'Custo Frete': item.custo_frete,
@@ -1262,7 +1395,6 @@
             }
         }
 
-        // Event Listeners
         document.getElementById('apply-filter-btn').addEventListener('click', () => refreshDashboard());
         document.getElementById('manual-refresh-btn').addEventListener('click', () => refreshDashboard());
         document.getElementById('export-excel-btn').addEventListener('click', exportToExcel);
@@ -1271,13 +1403,13 @@
             document.getElementById('start-date').value = '';
             document.getElementById('end-date').value = '';
             document.getElementById('cfop-filter').value = '';
+            document.getElementById('search-consolidated').value = '';
             document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = true);
             ['category-filter', 'transportadora-filter', 'destinatario-filter'].forEach(id => updateSelectButtonLabel(id));
             refreshDashboard();
             showToast('Filtros limpos.', 'success');
         });
 
-        // Tab Switching
         const tabButtons = document.querySelectorAll('.tab-button');
         tabButtons.forEach(button => {
             button.addEventListener('click', () => {
@@ -1288,7 +1420,6 @@
             });
         });
 
-        // Raw Data Filter Segment
         document.getElementById('raw-data-filter').addEventListener('click', (e) => {
             if(e.target.classList.contains('segment-btn')) {
                 document.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
@@ -1319,19 +1450,17 @@
             
             const fileArray = Array.from(files);
             
-            // Create status items
             fileArray.forEach((file, index) => {
                 const item = document.createElement('div');
                 item.className = 'upload-status-item';
                 item.id = `upload-item-${index}`;
                 item.innerHTML = `
                     <span>${file.name}</span>
-                    <i class="fas fa-spinner status-icon loading"></i>
+                    <i class="fas fa-spinner status-icon loading" title="Processando..."></i>
                 `;
                 uploadStatusList.appendChild(item);
             });
 
-            // Process uploads
             const uploads = fileArray.map(async (file, index) => {
                 const itemIcon = document.querySelector(`#upload-item-${index} .status-icon`);
                 try {
@@ -1341,11 +1470,13 @@
                     
                     if (response.ok) {
                         itemIcon.className = 'fas fa-check-circle status-icon success';
+                        itemIcon.title = 'Sucesso';
                     } else {
                         throw new Error('Falha no envio');
                     }
                 } catch (e) {
                     itemIcon.className = 'fas fa-times-circle status-icon error';
+                    itemIcon.title = 'Erro';
                 }
             });
 
@@ -1387,20 +1518,21 @@
             }, 3000);
         }
 
-        // Theme Toggle
         document.getElementById('checkbox').addEventListener('change', (e) => {
             document.body.classList.toggle('dark-theme');
             document.getElementById('theme-label').textContent = document.body.classList.contains('dark-theme') ? 'Tema Escuro' : 'Tema Claro';
             document.getElementById('logo-img').src = document.body.classList.contains('dark-theme') ? 
                 'https://ctfamadobrasil.com.br/wp-content/uploads/2025/12/Gemini_Generated_Image_v8cib8v8cib8v8ci-removebg-preview.png' : 
                 'https://ctfamadobrasil.com.br/wp-content/uploads/2025/09/logo.png';
+            
+            // Re-render chart to update colors
+            updateChart(filteredConsolidatedData);
         });
 
         // Init
         applyKpiVisibility();
         refreshDashboard();
 
-        // Realtime Subscription
         supabase.channel('public-db-changes')
             .on('postgres_changes', { event: '*', schema: 'public' }, () => {
                 showToast('Dados atualizados em tempo real!', 'info');
