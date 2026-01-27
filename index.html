@@ -6,7 +6,7 @@
     <title>Dashboard de Análise de Fretes - FAMA</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     
-    <!-- Leaflet CSS e JS para o mapa -->
+    <!-- Leaflet para o mapa -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
@@ -175,11 +175,6 @@
         }
         .kpi-card .value.highlight { color: var(--primary-color); }
 
-        /* --- Controls Container --- */
-        .controls-container {
-            margin-bottom: 24px;
-        }
-
         /* --- Módulo de Relatórios Rápidos --- */
         .quick-reports-section {
             background-color: var(--card-bg);
@@ -230,6 +225,7 @@
             display: flex;
             align-items: flex-end;
             gap: 16px;
+            margin-bottom: 24px;
             padding: 20px;
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -247,1412 +243,1233 @@
             border-radius: 6px;
             padding: 8px 12px;
             font-size: 14px;
-            width: 140px;
-            transition: all 0.2s;
+            min-width: 140px;
+            height: 38px;
+            box-sizing: border-box;
         }
-        .filter-bar input[type="date"]:focus,
-        .filter-bar input[type="text"]:focus { outline: none; border-color: var(--primary-color); }
-        
-        .multi-select-wrapper {
-            position: relative;
-            min-width: 180px;
-        }
-        .multi-select-button {
+
+        /* --- Custom Multi-Select Dropdown --- */
+        .custom-select-btn {
             background-color: var(--bg-color);
             color: var(--text-color);
             border: 1px solid var(--border-color);
             border-radius: 6px;
             padding: 8px 12px;
-            font-size: 14px;
+            font-size: 13px;
+            min-width: 200px;
+            height: 38px;
             cursor: pointer;
+            text-align: left;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
-            width: 100%;
+            position: relative;
         }
-        .multi-select-button:hover { border-color: var(--primary-color); }
-        .multi-select-button i { font-size: 10px; color: var(--text-secondary); }
-        
-        .multi-select-dropdown {
-            position: absolute;
-            top: calc(100% + 4px);
-            left: 0;
-            z-index: 100;
-            background: var(--dropdown-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            min-width: 100%;
-            max-width: 300px;
-            max-height: 320px;
-            overflow-y: auto;
+        .custom-select-btn::after {
+            content: '\25BC';
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+        .dropdown-content {
             display: none;
-        }
-        body.dark-theme .multi-select-dropdown { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); }
-        .multi-select-dropdown.active { display: block; }
-        
-        .multi-select-search {
-            position: sticky;
-            top: 0;
-            background: var(--dropdown-bg);
-            border-bottom: 1px solid var(--border-color);
-            padding: 8px;
-            z-index: 1;
-        }
-        .multi-select-search input {
-            width: 100%;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: var(--dropdown-bg);
             border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 6px 8px;
-            font-size: 13px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            min-width: 240px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 100;
+            margin-top: 4px;
+            padding: 8px 0;
         }
-        .multi-select-search input:focus { outline: none; border-color: var(--primary-color); }
-        
-        .multi-select-options {
-            padding: 4px;
-        }
-        .multi-select-option {
+        .dropdown-content.show { display: block; }
+        .dropdown-item {
+            padding: 8px 12px;
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 8px;
             cursor: pointer;
-            border-radius: 4px;
-            transition: background 0.15s;
+            transition: background 0.2s;
+            color: var(--text-color);
             font-size: 13px;
         }
-        .multi-select-option:hover { background: var(--dropdown-hover); }
-        .multi-select-option input[type="checkbox"] {
-            cursor: pointer;
-            accent-color: var(--primary-color);
+        .dropdown-item:hover { background-color: var(--dropdown-hover); }
+        .dropdown-item input[type="checkbox"] { margin: 0; cursor: pointer; }
+        .search-in-dropdown {
+            width: calc(100% - 16px);
+            margin: 0 8px 8px 8px;
+            padding: 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-size: 12px;
         }
-        
-        .filter-bar button {
-            background-color: var(--primary-color);
-            color: white;
+
+        .filter-actions {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+            align-items: center;
+        }
+
+        .filter-bar button.action-btn-main {
+            padding: 0 16px;
+            height: 38px;
             border: none;
             border-radius: 6px;
-            padding: 10px 20px;
-            font-size: 14px;
-            font-weight: 600;
             cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
             transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        #apply-filter-btn { background-color: var(--primary-color); color: white; }
+        #apply-filter-btn:hover { opacity: 0.9; }
+        #clear-filter-btn {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            height: 38px; width: 38px; padding: 0;
+        }
+        #clear-filter-btn:hover { background-color: var(--hover-bg); border-color: var(--primary-color); }
+        
+        #export-excel-btn {
+            background-color: #10b981;
+            color: white;
+            padding: 0 16px; height: 38px;
+            border: none; border-radius: 6px;
+            cursor: pointer; font-weight: 600; font-size: 14px;
+        }
+        #export-excel-btn:hover { background-color: #059669; }
+
+        .refresh-btn {
+            background-color: transparent !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-secondary) !important;
+            width: 38px !important; height: 38px;
+            padding: 0 !important;
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 6px; cursor: pointer;
+        }
+        .refresh-btn:hover {
+            border-color: var(--primary-color) !important;
+            color: var(--primary-color) !important;
+            background-color: var(--hover-bg) !important;
+        }
+        
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .spinning { animation: spin 1s linear infinite; }
+
+        /* --- Mapa do Brasil --- */
+        .map-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        .map-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-color);
             display: flex;
             align-items: center;
             gap: 8px;
         }
-        .filter-bar button:hover { background-color: #dc2626; transform: translateY(-1px); }
-        .filter-bar button.secondary {
-            background-color: transparent;
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
+        #map {
+            height: 400px;
+            width: 100%;
         }
-        .filter-bar button.secondary:hover { background-color: var(--hover-bg); transform: translateY(0); }
 
-        /* --- Tabs (Nav & Conteúdo) --- */
-        .tabs-container {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            overflow: hidden;
-            margin-bottom: 24px;
-        }
-        .tabs-nav {
-            display: flex;
-            background-color: var(--segment-control-bg);
-            border-bottom: 1px solid var(--border-color);
-            padding: 0;
-        }
+        /* --- Abas --- */
+        .view-tabs { margin-bottom: 24px; border-bottom: 1px solid var(--border-color); }
         .tab-button {
-            flex: 1;
-            background: transparent;
+            padding: 12px 24px;
             border: none;
-            padding: 16px 24px;
-            font-size: 14px;
-            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            background-color: transparent;
             color: var(--text-secondary);
             cursor: pointer;
-            transition: all 0.2s;
-            border-bottom: 3px solid transparent;
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: -1px;
+            transition: all 0.3s;
         }
-        .tab-button:hover { color: var(--text-color); background: rgba(0, 0, 0, 0.03); }
-        body.dark-theme .tab-button:hover { background: rgba(255, 255, 255, 0.05); }
         .tab-button.active {
-            color: var(--primary-color);
-            border-bottom-color: var(--primary-color);
-            background: var(--card-bg);
-        }
-        .view-content {
-            display: none;
-            padding: 24px;
-        }
-        .view-content.active { display: block; }
-
-        /* --- Map and Table Layout --- */
-        .content-layout {
-            display: grid;
-            grid-template-columns: 350px 1fr;
-            gap: 20px;
-            margin-bottom: 24px;
-        }
-        .map-container {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            height: 600px;
-        }
-        .map-header {
-            padding: 16px;
-            border-bottom: 1px solid var(--border-color);
             font-weight: 600;
-            font-size: 14px;
             color: var(--text-color);
+            border-bottom-color: var(--primary-color);
         }
-        #map {
-            flex: 1;
-            height: 100%;
-        }
+        .view-content { display: none; }
+        .view-content.active { display: block; animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- Table Toolbar --- */
+        /* --- Toolbar da Tabela --- */
         .table-toolbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
-            gap: 12px;
+            margin-bottom: 12px;
         }
-        .table-toolbar h2 {
-            margin: 0;
-            font-size: 18px;
-            font-weight: 600;
-        }
-        .toolbar-actions {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-        .search-box {
-            position: relative;
-        }
-        .search-box input {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 8px 12px 8px 36px;
+        .search-input {
+            width: 100%; max-width: 400px;
+            padding: 10px 16px;
+            border-radius: 8px; border: 1px solid var(--border-color);
+            background-color: var(--card-bg); color: var(--text-color);
             font-size: 14px;
-            width: 240px;
-            transition: all 0.2s;
-        }
-        .search-box input:focus { outline: none; border-color: var(--primary-color); }
-        .search-box i {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-secondary);
-        }
-        .toolbar-btn {
-            background-color: transparent;
-            color: var(--text-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 8px 14px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .toolbar-btn:hover {
-            border-color: var(--primary-color);
-            color: var(--primary-color);
         }
 
-        /* --- Table Container --- */
+        /* --- Tabela --- */
         .data-table-container {
             background: var(--card-bg);
-            border: 1px solid var(--border-color);
             border-radius: 12px;
+            border: 1px solid var(--border-color);
             overflow: hidden;
         }
-        .table-scroll-wrapper {
-            overflow-x: auto;
-            overflow-y: auto;
-            max-height: 600px;
+        .table-scroll-wrapper { max-height: 65vh; overflow-y: auto; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: auto; }
+        th, td { 
+            padding: 12px 16px; 
+            text-align: left; 
+            white-space: nowrap; 
+            border-bottom: 1px solid var(--border-color); 
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
+        thead {
+            position: sticky; top: 0; z-index: 10;
+            background: var(--card-bg);
+            box-shadow: 0 1px 0 var(--border-color);
         }
-        .data-table thead {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            background: var(--header-bg);
-        }
-        .data-table th {
-            padding: 14px 12px;
-            text-align: left;
-            font-weight: 600;
-            color: var(--header-text);
-            border-bottom: 2px solid var(--border-color);
-            white-space: nowrap;
-        }
-        .data-table td {
-            padding: 12px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .data-table tbody tr {
-            transition: background-color 0.15s;
-        }
-        .data-table tbody tr:hover {
-            background: var(--hover-bg);
-        }
-        .data-table .highlight { color: var(--primary-color); font-weight: 600; }
-        .data-table .status-badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 12px;
+        th {
             font-size: 11px;
-            font-weight: 600;
+            font-weight: 700;
             text-transform: uppercase;
-        }
-        .status-badge.entrada { background: rgba(16, 185, 129, 0.1); color: var(--success-color); }
-        .status-badge.saida { background: rgba(239, 68, 68, 0.1); color: var(--primary-color); }
-        .action-btn {
-            background: transparent;
-            border: 1px solid var(--border-color);
+            letter-spacing: 0.05em;
             color: var(--text-secondary);
-            padding: 6px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.2s;
-            margin-right: 4px;
         }
-        .action-btn:hover {
-            border-color: var(--primary-color);
-            color: var(--primary-color);
+        th.sortable { cursor: pointer; position: relative; padding-right: 24px; }
+        th.sortable::after {
+            content: '\2195'; opacity: 0.3; position: absolute;
+            right: 8px; transition: opacity 0.2s;
         }
-        .action-btn.delete:hover {
-            border-color: var(--highlight-color);
-            color: var(--highlight-color);
-        }
+        th.sortable:hover::after { opacity: 1; }
+        tbody tr { transition: background-color 0.1s ease; }
+        tbody tr:hover { background-color: var(--hover-bg); }
+        tbody tr:nth-child(even) { background-color: rgba(0,0,0,0.02); }
+        body.dark-theme tbody tr:nth-child(even) { background-color: rgba(255,255,255,0.02); }
+        
+        /* Badges */
+        .badge { padding: 4px 8px; border-radius: 12px; font-weight: 600; font-size: 11px; text-transform: uppercase; }
+        .badge-venda { background-color: rgba(16, 185, 129, 0.15); color: #10b981; }
+        .badge-compra { background-color: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+        .badge-devolucao { background-color: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+        .badge-transf { background-color: rgba(107, 114, 128, 0.15); color: #6b7280; }
+        .badge-default { background-color: rgba(239, 68, 68, 0.1); color: var(--text-secondary); }
 
-        /* --- Segment Control (Tipo NF-e / CT-e) --- */
+        .text-mono { font-family: 'Consolas', monospace; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+
+        .action-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px;
+            background: transparent; border: 1px solid transparent;
+            border-radius: 6px; color: var(--text-secondary);
+            cursor: pointer; transition: all 0.2s;
+        }
+        .action-btn:hover { background: var(--hover-bg); color: var(--primary-color); }
+        .action-btn svg { width: 14px; height: 14px; }
+        
+        .tag { font-size: 11px; background-color: var(--header-bg); color: var(--header-text); padding: 2px 6px; border-radius: 4px; }
+        
+        /* Empty State */
+        .empty-state-container {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 80px 20px; text-align: center;
+        }
+        .empty-state-container svg { width: 60px; height: 60px; color: var(--border-color); margin-bottom: 16px; }
+
+        /* Segmented Control */
         .segment-control {
-            display: inline-flex;
-            background: var(--segment-control-bg);
-            border-radius: 8px;
-            padding: 4px;
-            gap: 4px;
+            display: flex; gap: 4px; margin-bottom: 16px;
+            background-color: var(--segment-control-bg);
+            padding: 4px; border-radius: 8px; width: fit-content;
         }
         .segment-btn {
-            background: transparent;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            transition: all 0.2s;
+            padding: 6px 14px; border: none; border-radius: 6px;
+            background-color: transparent; color: var(--text-secondary);
+            font-weight: 500; font-size: 13px; cursor: pointer; transition: all 0.2s;
         }
         .segment-btn:hover { color: var(--text-color); }
         .segment-btn.active {
-            background: var(--card-bg);
-            color: var(--primary-color);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            background-color: var(--card-bg); color: var(--text-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-
-        /* --- Modal Base --- */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
+        
+        /* Theme Switch */
+        .theme-switch-wrapper { display: flex; align-items: center; }
+        .theme-switch { display: inline-block; height: 24px; position: relative; width: 44px; }
+        .theme-switch input { display:none; }
+        .slider { background-color: #ccc; bottom: 0; cursor: pointer; left: 0; position: absolute; right: 0; top: 0; transition: .4s; border-radius: 34px; }
+        .slider:before { background-color: #fff; bottom: 2px; content: ""; height: 20px; left: 2px; position: absolute; transition: .4s; width: 20px; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .theme-switch-wrapper span { margin-left: 10px; font-size: 13px; font-weight: 500; }
+        
+        /* --- Modais --- */
+        .modal-backdrop {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 9999;
+            display: none; align-items: center; justify-content: center;
         }
-        .modal.active { display: flex; }
+        .modal-backdrop.active { display: flex; animation: fadeIn 0.2s ease-out; }
         .modal-content {
-            background: var(--card-bg);
-            border-radius: 12px;
-            max-width: 700px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            position: relative;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            background: var(--card-bg); padding: 24px; border-radius: 12px;
+            width: 400px; max-width: 90%; border: 1px solid var(--border-color);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            max-height: 80vh; display: flex; flex-direction: column;
         }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--border-color);
+        .modal-content.large { width: 700px; } /* Modal maior para auditoria */
+        
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .modal-header h3 { margin: 0; font-size: 18px; }
+        .close-modal { background: none; border: none; cursor: pointer; font-size: 20px; color: var(--text-secondary); }
+        .modal-body { overflow-y: auto; flex: 1; padding-right: 8px; }
+        
+        .checkbox-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; user-select: none; margin-bottom: 12px; }
+        
+        /* --- Estilos da Auditoria (Lupa) --- */
+        .audit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+        .audit-section h4 { 
+            margin: 0 0 12px 0; font-size: 13px; text-transform: uppercase; 
+            color: var(--text-secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; 
         }
-        .modal-header h2 {
-            margin: 0;
-            font-size: 18px;
-            font-weight: 600;
-        }
-        .close-modal {
-            background: transparent;
-            border: none;
-            font-size: 24px;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: color 0.2s;
-            padding: 0;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .close-modal:hover { color: var(--text-color); }
-        .modal-body { padding: 24px; }
-
-        /* --- Upload Modal --- */
-        .upload-status-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .upload-status-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 16px;
-            background: var(--bg-color);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 14px;
-        }
-        .status-icon {
-            font-size: 18px;
-        }
-        .status-icon.loading {
-            color: var(--info-color);
-            animation: spin 1s linear infinite;
-        }
-        .status-icon.success { color: var(--success-color); }
-        .status-icon.error { color: var(--highlight-color); }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        /* --- Audit Modal --- */
-        .audit-section {
-            margin-bottom: 24px;
-        }
-        .audit-section h3 {
-            margin: 0 0 12px 0;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        .audit-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-        }
-        .audit-field {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .audit-field label {
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-        }
-        .audit-field .value {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-color);
-        }
+        .audit-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+        .audit-row .label { color: var(--text-secondary); }
+        .audit-row .val { font-weight: 600; text-align: right; }
+        .audit-row .val.highlight { color: var(--primary-color); }
+        
+        .audit-full-width { margin-top: 16px; }
         .audit-text-box {
-            background: var(--code-bg);
+            background-color: var(--code-bg);
             border: 1px solid var(--border-color);
             border-radius: 6px;
             padding: 12px;
-            font-size: 13px;
-            line-height: 1.6;
-            font-family: 'Courier New', monospace;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            line-height: 1.5;
             color: var(--text-color);
             white-space: pre-wrap;
-            word-wrap: break-word;
-            max-height: 200px;
+            max-height: 150px;
             overflow-y: auto;
         }
-        .audit-text-box.empty {
-            color: var(--text-secondary);
-            font-style: italic;
-        }
+        .audit-text-box.empty { font-style: italic; color: var(--text-secondary); }
 
-        /* --- KPI Config Modal --- */
-        .kpi-config-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+        /* Upload Status Items */
+        .upload-status-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px; border-bottom: 1px solid var(--border-color);
+            font-size: 13px;
         }
-        .kpi-config-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 16px;
-            background: var(--bg-color);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-        }
-        .kpi-config-item label {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            flex: 1;
-            font-size: 14px;
-        }
-        .kpi-config-item input[type="checkbox"] {
-            cursor: pointer;
-            accent-color: var(--primary-color);
-        }
+        .upload-status-item:last-child { border-bottom: none; }
+        .status-icon { margin-left: 10px; }
+        .status-icon.loading { color: var(--warning-color); animation: spin 1s linear infinite; }
+        .status-icon.success { color: var(--success-color); }
+        .status-icon.error { color: var(--primary-color); }
 
-        /* --- Theme Toggle --- */
-        .theme-switch {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .theme-switch input[type="checkbox"] { display: none; }
-        .theme-switch label {
-            position: relative;
-            display: inline-block;
-            width: 48px;
-            height: 26px;
-            background-color: var(--border-color);
-            border-radius: 13px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .theme-switch label::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background-color: white;
-            top: 3px;
-            left: 3px;
-            transition: transform 0.2s;
-        }
-        .theme-switch input:checked + label { background-color: var(--primary-color); }
-        .theme-switch input:checked + label::after { transform: translateX(22px); }
-        .theme-label {
-            font-size: 14px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        /* --- Toast Notifications --- */
+        /* Toast */
         .toast-container {
-            position: fixed;
-            top: 24px;
-            right: 24px;
-            z-index: 2000;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+            position: fixed; bottom: 24px; right: 24px; z-index: 10000;
+            display: flex; flex-direction: column; gap: 12px;
         }
         .toast {
-            background: var(--card-bg);
-            color: var(--text-color);
-            padding: 14px 18px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            border-left: 4px solid var(--info-color);
-            font-size: 14px;
-            font-weight: 500;
-            max-width: 320px;
-            animation: slideInRight 0.3s ease-out;
+            min-width: 320px; padding: 16px 20px; background: var(--card-bg);
+            border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            border-left: 4px solid; display: flex; align-items: center; gap: 12px;
+            animation: slideInRight 0.4s ease-out forwards;
         }
+        .toast.hiding { animation: slideOutRight 0.4s ease-in forwards; }
         .toast.success { border-left-color: var(--success-color); }
-        .toast.error { border-left-color: var(--highlight-color); }
+        .toast.error { border-left-color: var(--primary-color); }
         .toast.warning { border-left-color: var(--warning-color); }
-        .toast.hiding { animation: slideOutRight 0.3s ease-in forwards; }
-        @keyframes slideInRight { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes slideOutRight { to { transform: translateX(400px); opacity: 0; } }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideOutRight { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
 
-        /* --- Responsividade --- */
-        @media (max-width: 1400px) {
-            .content-layout {
-                grid-template-columns: 1fr;
-            }
-            .map-container {
-                height: 400px;
-            }
-        }
-        @media (max-width: 768px) {
-            .container { padding: 16px; }
-            header { flex-direction: column; gap: 16px; align-items: flex-start; }
-            .filter-bar { flex-direction: column; align-items: stretch; }
-            .filter-group { width: 100%; }
-            .multi-select-wrapper { width: 100%; }
-            .kpi-grid { grid-template-columns: 1fr; }
-            .table-toolbar { flex-direction: column; align-items: stretch; }
-            .toolbar-actions { flex-direction: column; }
-            .search-box input { width: 100%; }
-            .audit-grid { grid-template-columns: 1fr; }
-            .quick-reports-grid { grid-template-columns: 1fr; }
-            .map-container { height: 350px; }
-        }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
-    <div class="toast-container" id="toast-container"></div>
-    
+<body class="dark-theme">
+
     <div class="container">
         <header>
             <div class="logo-container">
-                <img src="https://ctfamadobrasil.com.br/wp-content/uploads/2025/09/logo.png" alt="Logo FAMA" class="logo" id="logo-img">
+                <img id="logo-img" src="https://ctfamadobrasil.com.br/wp-content/uploads/2025/12/Gemini_Generated_Image_v8cib8v8cib8v8ci-removebg-preview.png" alt="Logo Fama" class="logo">
                 <h1>Dashboard de Análise de Fretes</h1>
             </div>
             <div class="header-actions">
-                <div class="theme-switch">
-                    <span class="theme-label" id="theme-label">Tema Claro</span>
-                    <input type="checkbox" id="checkbox">
-                    <label for="checkbox"></label>
+                <div class="theme-switch-wrapper">
+                    <label class="theme-switch" for="checkbox">
+                        <input type="checkbox" id="checkbox" checked/>
+                        <div class="slider round"></div>
+                    </label>
+                    <span id="theme-label">Tema Escuro</span>
                 </div>
             </div>
         </header>
 
         <div class="upload-area" id="drop-zone">
-            <i class="fas fa-cloud-upload-alt"></i>
-            <p>Arraste arquivos XML ou <a href="#" id="upload-link">clique para selecionar</a></p>
-            <input type="file" id="file-input" accept=".xml" multiple style="display: none;">
+            <i class="fas fa-upload"></i>
+            <p>Arraste e solte os arquivos XML aqui ou <a href="#" id="upload-link">clique para selecionar</a></p>
+            <p><small>Apenas arquivos XML são suportados</small></p>
+            <input type="file" id="file-input" multiple accept=".xml" style="display: none;">
         </div>
-
+        
         <div class="kpi-header-row">
-            <h2 style="margin: 0; font-size: 18px; font-weight: 600;">Indicadores-Chave</h2>
-            <button class="config-btn" id="open-kpi-config">
-                <i class="fas fa-cog"></i>
-                Configurar KPIs
+            <h4 style="margin:0; color:var(--text-secondary); text-transform:uppercase; font-size:12px;">Indicadores de Performance</h4>
+            <button id="config-kpi-btn" class="config-btn">
+                <i class="fas fa-cog"></i> Configurar KPIs
             </button>
         </div>
 
-        <div class="kpi-grid" id="kpi-grid">
-            <div class="kpi-card" id="card-total-notas" data-kpi="total-notas" data-visible="true">
-                <h3><i class="fas fa-file-invoice"></i> Total de Notas</h3>
-                <div class="value">0</div>
+        <div class="kpi-grid">
+            <div class="kpi-card" id="card-custo-total" data-kpi="custo-total">
+                <h3><i class="fas fa-dollar-sign"></i> CUSTO TOTAL (MÊS)</h3>
+                <div id="kpi-custo-total" class="value">R$ 0,00</div>
             </div>
-            <div class="kpi-card" id="card-valor-total" data-kpi="valor-total" data-visible="true">
-                <h3><i class="fas fa-dollar-sign"></i> Valor Total (NF-e)</h3>
-                <div class="value highlight">R$ 0,00</div>
+            <div class="kpi-card" id="card-perc-frete" data-kpi="perc-frete">
+                <h3><i class="fas fa-file-invoice-dollar"></i> % FRETE S/ NOTA</h3>
+                <div id="kpi-perc-frete" class="value highlight">0,00%</div>
             </div>
-            <div class="kpi-card" id="card-frete-total" data-kpi="frete-total" data-visible="true">
-                <h3><i class="fas fa-truck"></i> Frete Total</h3>
-                <div class="value highlight">R$ 0,00</div>
+            <div class="kpi-card" id="card-custo-ton" data-kpi="custo-ton">
+                <h3><i class="fas fa-weight-hanging"></i> CUSTO MÉDIO / TON</h3>
+                <div id="kpi-custo-ton" class="value">R$ 0,00</div>
             </div>
-            <div class="kpi-card" id="card-peso-total" data-kpi="peso-total" data-visible="true">
-                <h3><i class="fas fa-weight"></i> Peso Total</h3>
-                <div class="value">0 ton</div>
+            <div class="kpi-card" id="card-nfes-processadas" data-kpi="nfes-processadas">
+                <h3><i class="fas fa-file-alt"></i> NF-ES PROCESSADAS</h3>
+                <div id="kpi-nfes-processadas" class="value">0</div>
             </div>
-            <div class="kpi-card" id="card-ticket-medio" data-kpi="ticket-medio" data-visible="true">
-                <h3><i class="fas fa-receipt"></i> Ticket Médio</h3>
-                <div class="value">R$ 0,00</div>
+            <div class="kpi-card" id="card-taxas-extras" data-kpi="taxas-extras">
+                <h3><i class="fas fa-exclamation-triangle"></i> TAXAS EXTRAS</h3>
+                <div id="kpi-taxas-extras" class="value highlight">R$ 0,00</div>
             </div>
-            <div class="kpi-card" id="card-custo-kg" data-kpi="custo-kg" data-visible="true">
-                <h3><i class="fas fa-balance-scale"></i> Custo por KG</h3>
-                <div class="value">R$ 0,00</div>
+            <div class="kpi-card" id="card-peso-total" data-kpi="peso-total">
+                <h3><i class="fas fa-truck-loading"></i> PESO TOTAL (TON)</h3>
+                <div id="kpi-peso-total" class="value">0,00</div>
+            </div>
+            <div class="kpi-card" id="card-valor-notas" data-kpi="valor-notas">
+                <h3><i class="fas fa-archive"></i> VALOR TOTAL NOTAS</h3>
+                <div id="kpi-valor-notas" class="value">R$ 0,00</div>
+            </div>
+            <div class="kpi-card" id="card-ctes-pendentes" data-kpi="ctes-pendentes">
+                <h3><i class="fas fa-hourglass-half"></i> CT-ES PENDENTES</h3>
+                <div id="kpi-ctes-pendentes" class="value">0</div>
+            </div>
+            <div class="kpi-card" id="card-custo-kg" data-kpi="custo-kg">
+                <h3><i class="fas fa-balance-scale"></i> CUSTO POR KG</h3>
+                <div id="kpi-custo-kg" class="value">R$ 0,00</div>
             </div>
         </div>
 
-        <div class="controls-container">
-            <div class="quick-reports-section">
-                <h3>Relatórios Rápidos:</h3>
-                <div class="quick-reports-grid">
-                    <button class="quick-report-btn" data-report="geral">
-                        <i class="fas fa-chart-pie"></i>
-                        Visão Geral (Todos os Dados)
-                    </button>
-                    <button class="quick-report-btn" data-report="fama-df-rizzo">
-                        <i class="fas fa-truck-loading"></i>
-                        Fama → DF (Transportadora Rizzo)
-                    </button>
-                    <button class="quick-report-btn" data-report="fama-df-outras">
-                        <i class="fas fa-shipping-fast"></i>
-                        Fama → DF (Outras Transportadoras)
-                    </button>
-                    <button class="quick-report-btn" data-report="fama-outros">
-                        <i class="fas fa-warehouse"></i>
-                        Fama → Outros Clientes
-                    </button>
-                    <button class="quick-report-btn" data-report="fama-compras">
-                        <i class="fas fa-shopping-cart"></i>
-                        Fama (Compras)
-                    </button>
-                </div>
-            </div>
-
-            <div class="filter-bar">
-                <div class="filter-group">
-                    <label for="start-date">Data Início</label>
-                    <input type="date" id="start-date">
-                </div>
-                <div class="filter-group">
-                    <label for="end-date">Data Fim</label>
-                    <input type="date" id="end-date">
-                </div>
-
-                <div class="filter-group">
-                    <label>Categoria</label>
-                    <div class="multi-select-wrapper" id="category-filter">
-                        <div class="multi-select-button">
-                            <span>Todas</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                        <div class="multi-select-dropdown">
-                            <div class="multi-select-search">
-                                <input type="text" placeholder="Buscar...">
-                            </div>
-                            <div class="multi-select-options"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="filter-group">
-                    <label>Transportadora</label>
-                    <div class="multi-select-wrapper" id="transportadora-filter">
-                        <div class="multi-select-button">
-                            <span>Todas</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                        <div class="multi-select-dropdown">
-                            <div class="multi-select-search">
-                                <input type="text" placeholder="Buscar...">
-                            </div>
-                            <div class="multi-select-options"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="filter-group">
-                    <label>Destinatário</label>
-                    <div class="multi-select-wrapper" id="destinatario-filter">
-                        <div class="multi-select-button">
-                            <span>Todos</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                        <div class="multi-select-dropdown">
-                            <div class="multi-select-search">
-                                <input type="text" placeholder="Buscar...">
-                            </div>
-                            <div class="multi-select-options"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="filter-group">
-                    <label for="cfop-filter">CFOP</label>
-                    <input type="text" id="cfop-filter" placeholder="ex: 5101">
-                </div>
-
-                <button id="apply-filter-btn">
-                    <i class="fas fa-filter"></i>
-                    Aplicar Filtros
+        <div class="quick-reports-section">
+            <h3>Relatórios Rápidos:</h3>
+            <div class="quick-reports-grid">
+                <button class="quick-report-btn" data-report="geral">
+                    <i class="fas fa-chart-pie"></i>
+                    Visão Geral (Todos os Dados)
                 </button>
-                <button class="secondary" id="clear-filter-btn">
-                    <i class="fas fa-eraser"></i>
-                    Limpar
+                <button class="quick-report-btn" data-report="fama-df-rizzo">
+                    <i class="fas fa-truck-loading"></i>
+                    Fama → DF (Transportadora Rizzo)
+                </button>
+                <button class="quick-report-btn" data-report="fama-df-outras">
+                    <i class="fas fa-shipping-fast"></i>
+                    Fama → DF (Outras Transportadoras)
+                </button>
+                <button class="quick-report-btn" data-report="fama-outros">
+                    <i class="fas fa-warehouse"></i>
+                    Fama → Outros Clientes
+                </button>
+                <button class="quick-report-btn" data-report="fama-compras">
+                    <i class="fas fa-shopping-cart"></i>
+                    Fama (Compras)
                 </button>
             </div>
         </div>
 
-        <div class="tabs-container">
-            <div class="tabs-nav">
-                <button class="tab-button active" data-view="consolidated-view">
-                    <i class="fas fa-chart-line"></i> Relatório Consolidado
-                </button>
-                <button class="tab-button" data-view="raw-view">
-                    <i class="fas fa-database"></i> Dados Brutos
-                </button>
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label for="start-date">De:</label>
+                <input type="date" id="start-date">
             </div>
-
-            <div class="view-content active" id="consolidated-view">
-                <div class="table-toolbar">
-                    <h2>Dados Consolidados</h2>
-                    <div class="toolbar-actions">
-                        <div class="search-box">
-                            <i class="fas fa-search"></i>
-                            <input type="text" id="search-consolidated" placeholder="Buscar na tabela...">
-                        </div>
-                        <button class="toolbar-btn" id="manual-refresh-btn">
-                            <i class="fas fa-sync-alt"></i>
-                            Atualizar
-                        </button>
-                        <button class="toolbar-btn" id="export-excel-btn">
-                            <i class="fas fa-file-excel"></i>
-                            Exportar
-                        </button>
-                    </div>
-                </div>
-
-                <div class="content-layout">
-                    <div class="map-container">
-                        <div class="map-header">
-                            <i class="fas fa-map-marked-alt"></i> Mapa Geográfico de Fretes
-                        </div>
-                        <div id="map"></div>
-                    </div>
-
-                    <div class="data-table-container">
-                        <div class="table-scroll-wrapper">
-                            <table class="data-table" id="consolidated-table">
-                                <thead>
-                                    <tr>
-                                        <th>Categoria</th>
-                                        <th>Chave NF-e</th>
-                                        <th>Data Emissão</th>
-                                        <th>Destinatário</th>
-                                        <th>Cidade/UF</th>
-                                        <th>Transportadora</th>
-                                        <th>Valor Nota</th>
-                                        <th>Frete</th>
-                                        <th>Peso (ton)</th>
-                                        <th>Custo/KG</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="consolidated-tbody"></tbody>
-                            </table>
-                        </div>
-                    </div>
+            <div class="filter-group">
+                <label for="end-date">Até:</label>
+                <input type="date" id="end-date">
+            </div>
+            
+            <!-- Multi-Select: Operação -->
+            <div class="filter-group">
+                <label>Operação:</label>
+                <div class="custom-select-btn" id="btn-category-filter">Selecionar...</div>
+                <div class="dropdown-content" id="dropdown-category-filter">
+                    <div class="dropdown-item"><input type="checkbox" value="Venda" checked> Venda</div>
+                    <div class="dropdown-item"><input type="checkbox" value="Compra" checked> Compra</div>
+                    <div class="dropdown-item"><input type="checkbox" value="Devolução" checked> Devolução</div>
+                    <div class="dropdown-item"><input type="checkbox" value="Transferência" checked> Transferência</div>
                 </div>
             </div>
 
-            <div class="view-content" id="raw-view">
-                <div class="table-toolbar">
-                    <h2>Dados Brutos</h2>
-                    <div class="toolbar-actions">
-                        <div class="segment-control" id="raw-data-filter">
-                            <button class="segment-btn active" data-type="all">Todos</button>
-                            <button class="segment-btn" data-type="nfe">NF-e</button>
-                            <button class="segment-btn" data-type="cte">CT-e</button>
-                        </div>
-                    </div>
+            <div class="filter-group">
+                <label for="cfop-filter">CFOP:</label>
+                <input type="text" id="cfop-filter" placeholder="Ex: 5102">
+            </div>
+
+            <!-- Multi-Select: Transportadora -->
+            <div class="filter-group">
+                <label>Transportadora:</label>
+                <div class="custom-select-btn" id="btn-transportadora-filter">Selecionar...</div>
+                <div class="dropdown-content" id="dropdown-transportadora-filter">
+                    <input type="text" class="search-in-dropdown" placeholder="Buscar..." onkeyup="filterDropdown(this, 'dropdown-transportadora-filter')">
+                    <div id="list-transportadora-filter"></div>
                 </div>
-                <div class="data-table-container">
-                    <div class="table-scroll-wrapper">
-                        <table class="data-table" id="raw-data-table">
-                            <thead>
-                                <tr>
-                                    <th>Tipo</th>
-                                    <th>Chave</th>
-                                    <th>Data Emissão</th>
-                                    <th>Emitente</th>
-                                    <th>Destinatário</th>
-                                    <th>Valor</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="raw-data-tbody"></tbody>
-                        </table>
-                    </div>
+            </div>
+
+            <!-- Multi-Select: Destinatário -->
+            <div class="filter-group">
+                <label>Destinatário:</label>
+                <div class="custom-select-btn" id="btn-destinatario-filter">Selecionar...</div>
+                <div class="dropdown-content" id="dropdown-destinatario-filter">
+                    <input type="text" class="search-in-dropdown" placeholder="Buscar..." onkeyup="filterDropdown(this, 'dropdown-destinatario-filter')">
+                    <div id="list-destinatario-filter"></div>
+                </div>
+            </div>
+
+            <div class="filter-actions">
+                <button id="apply-filter-btn" class="action-btn-main">Filtrar</button>
+                <button id="clear-filter-btn" title="Limpar Filtros"><i class="fas fa-times"></i></button>
+                <button id="manual-refresh-btn" class="refresh-btn" title="Atualizar Dados Agora">
+                    <i class="fas fa-sync-alt" id="refresh-icon"></i>
+                </button>
+                <button id="export-excel-btn" title="Exportar para Excel">
+                    <i class="fas fa-file-excel"></i> Exportar
+                </button>
+            </div>
+        </div>
+
+        <div class="view-tabs">
+            <button class="tab-button active" data-view="consolidated-view">Relatório Consolidado (Auditoria)</button>
+            <button class="tab-button" data-view="raw-data-view">Dados Brutos (Sistema)</button>
+        </div>
+
+        <div id="consolidated-view" class="view-content active">
+            <div class="map-section">
+                <div class="map-header">
+                    <i class="fas fa-map-marked-alt"></i> Mapa Geográfico de Fretes
+                </div>
+                <div id="map"></div>
+            </div>
+            
+            <div class="table-toolbar">
+                <input type="text" id="search-consolidated" class="search-input" placeholder="🔍 Buscar Chave, Cliente, Valor, Obs, Info Compl...">
+                <button id="col-settings-btn" class="config-btn">
+                    <i class="fas fa-columns"></i> Colunas
+                </button>
+            </div>
+            <div class="data-table-container">
+                <div class="table-scroll-wrapper">
+                    <table id="table-consolidated">
+                        <thead id="consolidated-table-head">
+                            <!-- Headers generated dynamically via JS -->
+                        </thead>
+                        <tbody id="consolidated-table-body">
+                            <!-- Rows generated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="raw-data-view" class="view-content">
+            <div class="segment-control" id="raw-data-filter">
+                <button class="segment-btn active" data-type="all">Todos</button>
+                <button class="segment-btn" data-type="NF-e">NF-e</button>
+                <button class="segment-btn" data-type="CT-e">CT-e</button>
+            </div>
+            <input type="text" id="search-raw" class="search-input" placeholder="🔍 Buscar ID, Chave ou Transportadora...">
+            <div class="data-table-container">
+                <div class="table-scroll-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="sortable">Data Proc.</th>
+                                <th class="sortable">Tipo</th>
+                                <th class="sortable">Chave de Acesso</th>
+                                <th class="sortable">Transportadora</th>
+                                <th class="sortable">Serviço</th>
+                                <th class="sortable text-right">Valor</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="raw-data-table-body">
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Upload -->
-    <div class="modal" id="upload-modal">
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Modal: KPIs -->
+    <div class="modal-backdrop" id="kpi-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2><i class="fas fa-cloud-upload-alt"></i> Status do Upload</h2>
+                <h3>Visibilidade de KPIs</h3>
+                <button class="close-modal" id="close-kpi-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="kpi-options-container"></div>
+        </div>
+    </div>
+
+    <!-- Modal: Configuração de Colunas -->
+    <div class="modal-backdrop" id="column-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Configurar Colunas</h3>
+                <button class="close-modal" id="close-column-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="column-options-container">
+                <!-- Checkboxes generated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Status de Upload -->
+    <div class="modal-backdrop" id="upload-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Processando Arquivos</h3>
                 <button class="close-modal" id="close-upload-modal">&times;</button>
             </div>
-            <div class="modal-body">
-                <div class="upload-status-list" id="upload-status-list"></div>
+            <div class="modal-body" id="upload-status-list">
+                <!-- Status items here -->
             </div>
         </div>
     </div>
 
-    <!-- Modal de Auditoria -->
-    <div class="modal" id="audit-modal">
-        <div class="modal-content">
+    <!-- Modal: Auditoria (Lupa) -->
+    <div class="modal-backdrop" id="audit-modal">
+        <div class="modal-content large">
             <div class="modal-header">
-                <h2><i class="fas fa-clipboard-check"></i> Auditoria de Nota Fiscal</h2>
+                <h3><i class="fas fa-search"></i> Auditoria de Frete</h3>
                 <button class="close-modal" id="close-audit-modal">&times;</button>
             </div>
-            <div class="modal-body">
-                <div class="audit-section">
-                    <h3>Dados Fiscais</h3>
-                    <div class="audit-grid">
-                        <div class="audit-field">
-                            <label>CFOP</label>
-                            <div class="value" id="audit-cfop">--</div>
-                        </div>
-                        <div class="audit-field">
-                            <label>Volumes</label>
-                            <div class="value" id="audit-volumes">--</div>
-                        </div>
-                        <div class="audit-field">
-                            <label>Espécie</label>
-                            <div class="value" id="audit-especie">--</div>
-                        </div>
-                        <div class="audit-field">
-                            <label>Peso (ton)</label>
-                            <div class="value" id="audit-peso">--</div>
-                        </div>
+            <div class="modal-body" id="audit-content">
+                <!-- Conteúdo Preenchido via JS -->
+                <div class="audit-grid">
+                    <div class="audit-section">
+                        <h4>Dados Operacionais</h4>
+                        <div class="audit-row"><span class="label">CFOP:</span> <span class="val" id="audit-cfop">--</span></div>
+                        <div class="audit-row"><span class="label">Volumes:</span> <span class="val" id="audit-volumes">--</span></div>
+                        <div class="audit-row"><span class="label">Espécie:</span> <span class="val" id="audit-especie">--</span></div>
+                        <div class="audit-row"><span class="label">Peso Total (Ton):</span> <span class="val" id="audit-peso">--</span></div>
+                        <div class="audit-row"><span class="label">Chave NF-e:</span> <span class="val text-mono" style="font-size:11px;" id="audit-chave">--</span></div>
                     </div>
-                    <div class="audit-field" style="margin-top: 16px;">
-                        <label>Chave NF-e</label>
-                        <div class="value" id="audit-chave" style="font-size: 11px; word-break: break-all;">--</div>
+                    <div class="audit-section">
+                        <h4>Financeiro Detalhado</h4>
+                        <div class="audit-row"><span class="label">Valor Nota:</span> <span class="val" id="audit-valor-nota">--</span></div>
+                        <div class="audit-row"><span class="label">Frete Total:</span> <span class="val highlight" id="audit-frete">--</span></div>
+                        <div class="audit-row"><span class="label">Pedágio:</span> <span class="val" id="audit-pedagio">--</span></div>
+                        <div class="audit-row"><span class="label">Agendamento:</span> <span class="val" id="audit-agendamento">--</span></div>
+                        <div class="audit-row"><span class="label">Reentrega:</span> <span class="val" id="audit-reentrega">--</span></div>
                     </div>
                 </div>
-
-                <div class="audit-section">
-                    <h3>Valores de Frete</h3>
-                    <div class="audit-grid">
-                        <div class="audit-field">
-                            <label>Valor da Nota</label>
-                            <div class="value" id="audit-valor-nota">R$ 0,00</div>
-                        </div>
-                        <div class="audit-field">
-                            <label>Frete</label>
-                            <div class="value" id="audit-frete">R$ 0,00</div>
-                        </div>
-                        <div class="audit-field">
-                            <label>Pedágio</label>
-                            <div class="value" id="audit-pedagio">R$ 0,00</div>
-                        </div>
-                        <div class="audit-field">
-                            <label>Agendamento</label>
-                            <div class="value" id="audit-agendamento">R$ 0,00</div>
-                        </div>
-                        <div class="audit-field">
-                            <label>Reentrega</label>
-                            <div class="value" id="audit-reentrega">R$ 0,00</div>
-                        </div>
+                
+                <div class="audit-full-width">
+                    <div class="audit-section">
+                        <h4><i class="fas fa-comment-alt"></i> Observações da NF-e (Info. Complementar)</h4>
+                        <div class="audit-text-box" id="audit-info-compl"></div>
                     </div>
                 </div>
 
-                <div class="audit-section">
-                    <h3>Informações Complementares (NF-e)</h3>
-                    <div class="audit-text-box" id="audit-info-compl">Nenhuma observação na NF-e.</div>
-                </div>
-
-                <div class="audit-section">
-                    <h3>Observações do CT-e</h3>
-                    <div class="audit-text-box" id="audit-obs-cte">Nenhuma observação no CT-e.</div>
+                <div class="audit-full-width">
+                    <div class="audit-section">
+                        <h4><i class="fas fa-truck"></i> Observações do CT-e</h4>
+                        <div class="audit-text-box" id="audit-obs-cte"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Configuração de KPIs -->
-    <div class="modal" id="kpi-config-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-cog"></i> Configurar KPIs Visíveis</h2>
-                <button class="close-modal" id="close-kpi-config">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="kpi-config-list" id="kpi-config-list"></div>
-            </div>
-        </div>
-    </div>
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        // --- CONFIGURAÇÃO ---
+        const SUPABASE_URL = 'https://pdqkvyxufnprapkgsvxx.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkcWt2eXh1Zm5wcmFwa2dzdnh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMDE2MzAsImV4cCI6MjA3ODc3NzYzMH0.CFxmP1S8829joB6txKQ4bypp-Qr7SDHAg0P2Dgpti1k';
+        const N8N_QUEUE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/receber-xml';
+        const N8N_DELETE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/excluir-registro-relatorio-cte';
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    <script>
-        const SUPABASE_URL = 'https://ljstflnfkxqszvpqrpnv.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqc3RmbG5ma3hxc3p2cHFycG52Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU2OTkyNzIsImV4cCI6MjA1MTI3NTI3Mn0.gBmf_qoOB5rVWmcGZKCY8TfUyPBu1SkGTOIw3_lW20g';
-        const N8N_QUEUE_WEBHOOK = 'https://jtl4l0c8.app.n8n.cloud/webhook/f95be62f-7ab5-4e94-bb97-27e4cf2dbf3c';
-        const N8N_DELETE_WEBHOOK = 'https://jtl4l0c8.app.n8n.cloud/webhook/fe8fcbb5-9fe3-422c-af1f-0eb750e0f18d';
+        // --- DEFINIÇÕES DE COLUNAS ---
+        const AVAILABLE_COLUMNS = [
+            { id: 'data', label: 'Data Emissão', sortable: true, default: true },
+            { id: 'chave', label: 'Chave NF-e', sortable: true, default: true },
+            { id: 'destinatario', label: 'Destinatário', sortable: true, default: true },
+            { id: 'transportadora', label: 'Transportadora', sortable: true, default: true },
+            { id: 'operacao', label: 'Operação', sortable: true, default: true },
+            { id: 'cfop', label: 'CFOP', sortable: true, default: true },
+            { id: 'volumes', label: 'Vol.', sortable: true, default: true },
+            { id: 'especie', label: 'Espécie', sortable: true, default: true },
+            { id: 'info', label: 'Info. Compl.', sortable: false, default: false }, // Info Curta
+            { id: 'obs_cte', label: 'Obs. CTe', sortable: false, default: false }, // Nova Coluna (Opcional)
+            { id: 'valor_nota', label: 'Valor Nota', sortable: true, align: 'right', default: true },
+            { id: 'peso', label: 'Peso (Ton)', sortable: true, align: 'right', default: true },
+            { id: 'frete_total', label: 'Frete Total', sortable: true, align: 'right', default: true },
+            { id: 'perc_frete', label: '% Fr/NF', sortable: true, align: 'right', default: true },
+            { id: 'custo_kg', label: 'Custo/KG', sortable: true, align: 'right', default: true },
+            { id: 'agendamento', label: 'Agen.', sortable: true, align: 'right', default: true },
+            { id: 'reentrega', label: 'Reent.', sortable: true, align: 'right', default: true },
+            { id: 'pedagio', label: 'Pedágio', sortable: true, align: 'right', default: true },
+            { id: 'ctes', label: 'CTEs', sortable: true, align: 'center', default: true },
+            { id: 'acoes', label: 'Ações', sortable: false, align: 'center', default: true }
+        ];
 
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        let consolidatedDataCache = [];
-        let rawDataCache = { nfe: [], cte: [] };
-        let currentRawDataFilter = 'all';
-        let map = null;
-        let markers = [];
-
-        const debouncedRefresh = debounce(() => refreshDashboard(), 2000);
-
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
+        // --- UTILS & DEBOUNCE ---
+        function debounce(func, timeout = 2000){
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                const refreshIcon = document.getElementById('refresh-icon');
+                if(refreshIcon) refreshIcon.classList.add('spinning');
+                timer = setTimeout(() => { 
+                    func.apply(this, args).finally(() => {
+                        if(refreshIcon) refreshIcon.classList.remove('spinning');
+                    }); 
+                }, timeout);
             };
         }
 
-        // --- FORMATTERS ---
-        function formatCurrency(value) {
-            if (!value || isNaN(value)) return 'R$ 0,00';
-            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-        }
-        function formatDecimal(value, decimals = 3) {
-            if (!value || isNaN(value)) return '0';
-            return parseFloat(value).toFixed(decimals).replace('.', ',');
-        }
-        function formatDate(dateStr) {
-            if (!dateStr) return '--';
-            const d = new Date(dateStr);
-            return d.toLocaleDateString('pt-BR');
-        }
+        const formatCurrency = (val) => (val || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const formatCurrencyOrDash = (val) => (val && val !== 0) ? val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '<span style="color:var(--text-secondary); opacity:0.5;">--</span>';
+        const formatDecimal = (val) => (val || 0).toFixed(3).replace('.',',');
 
-        // --- MULTI-SELECT LOGIC ---
-        function initMultiSelect(wrapperId) {
-            const wrapper = document.getElementById(wrapperId);
-            const button = wrapper.querySelector('.multi-select-button');
-            const dropdown = wrapper.querySelector('.multi-select-dropdown');
-            const searchInput = wrapper.querySelector('.multi-select-search input');
-            const optionsContainer = wrapper.querySelector('.multi-select-options');
+        // --- STATE MANAGEMENT ---
+        const consolidatedTableBody = document.getElementById('consolidated-table-body');
+        const consolidatedTableHead = document.getElementById('consolidated-table-head');
+        const rawDataTableBody = document.getElementById('raw-data-table-body');
+        let consolidatedDataCache = [];
+        let filteredConsolidatedData = []; // Cache filtrado localmente
+        let rawDataSource = [];
+        let currentRawDataFilter = 'all';
 
-            button.addEventListener('click', (e) => {
-                e.stopPropagation();
-                document.querySelectorAll('.multi-select-dropdown').forEach(d => {
-                    if (d !== dropdown) d.classList.remove('active');
-                });
-                dropdown.classList.toggle('active');
-            });
-
-            searchInput.addEventListener('input', (e) => {
-                const term = e.target.value.toLowerCase();
-                optionsContainer.querySelectorAll('.multi-select-option').forEach(opt => {
-                    const text = opt.textContent.toLowerCase();
-                    opt.style.display = text.includes(term) ? 'flex' : 'none';
+        // --- MULTI-SELECT FILTER LOGIC ---
+        function setupMultiSelects() {
+            ['category-filter', 'transportadora-filter', 'destinatario-filter'].forEach(id => {
+                const btn = document.getElementById(`btn-${id}`);
+                const content = document.getElementById(`dropdown-${id}`);
+                
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.querySelectorAll('.dropdown-content').forEach(d => {
+                        if (d !== content) d.classList.remove('show');
+                    });
+                    content.classList.toggle('show');
                 });
             });
 
-            optionsContainer.addEventListener('change', () => updateSelectButtonLabel(wrapperId));
-        }
+            window.addEventListener('click', () => {
+                document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+            });
 
-        function populateMultiSelect(wrapperId, items) {
-            const wrapper = document.getElementById(wrapperId);
-            const container = wrapper.querySelector('.multi-select-options');
-            container.innerHTML = '';
-            items.forEach(item => {
-                const label = document.createElement('label');
-                label.className = 'multi-select-option';
-                label.innerHTML = `<input type="checkbox" value="${item}" checked> ${item}`;
-                container.appendChild(label);
+            document.querySelectorAll('.dropdown-content').forEach(d => {
+                d.addEventListener('click', (e) => e.stopPropagation());
             });
         }
+        setupMultiSelects();
 
-        function updateSelectButtonLabel(wrapperId) {
-            const wrapper = document.getElementById(wrapperId);
-            const button = wrapper.querySelector('.multi-select-button span');
-            const checkboxes = wrapper.querySelectorAll('input[type="checkbox"]');
-            const checked = Array.from(checkboxes).filter(c => c.checked);
-            if (checked.length === 0) button.textContent = 'Nenhum';
-            else if (checked.length === checkboxes.length) button.textContent = wrapperId.includes('destinatario') ? 'Todos' : 'Todas';
-            else button.textContent = `${checked.length} selecionado(s)`;
-        }
-
-        function getSelectedOptions(wrapperId) {
-            const wrapper = document.getElementById(wrapperId);
-            const checkboxes = wrapper.querySelectorAll('input[type="checkbox"]:checked');
+        function getSelectedOptions(filterId) {
+            const container = document.getElementById(`dropdown-${filterId}`);
+            const checkboxes = container.querySelectorAll('input[type="checkbox"]:checked');
             return Array.from(checkboxes).map(cb => cb.value);
         }
 
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.multi-select-wrapper')) {
-                document.querySelectorAll('.multi-select-dropdown').forEach(d => d.classList.remove('active'));
+        function updateSelectButtonLabel(filterId, allText = 'Todas') {
+            const container = document.getElementById(`dropdown-${filterId}`);
+            const total = container.querySelectorAll('input[type="checkbox"]').length;
+            const checked = container.querySelectorAll('input[type="checkbox"]:checked').length;
+            const btn = document.getElementById(`btn-${filterId}`);
+            
+            if (checked === 0) btn.textContent = 'Nenhuma Selecionada';
+            else if (checked === total) btn.textContent = allText;
+            else btn.textContent = `${checked} Selecionado(s)`;
+        }
+
+        window.filterDropdown = function(input, dropdownId) {
+            const filter = input.value.toLowerCase();
+            const div = document.getElementById(dropdownId);
+            const items = div.getElementsByClassName("dropdown-item");
+            for (let i = 0; i < items.length; i++) {
+                const txtValue = items[i].textContent || items[i].innerText;
+                if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                    items[i].style.display = "";
+                } else {
+                    items[i].style.display = "none";
+                }
             }
+        };
+
+        // --- COLUMN VISIBILITY MANAGEMENT ---
+        function loadColumnSettings() {
+            const saved = localStorage.getItem('fama_col_settings');
+            if (saved) return JSON.parse(saved);
+            return AVAILABLE_COLUMNS.filter(c => c.default).map(c => c.id);
+        }
+
+        function saveColumnSettings(cols) {
+            localStorage.setItem('fama_col_settings', JSON.stringify(cols));
+            renderConsolidatedTable(); 
+        }
+
+        function setupColumnModal() {
+            const container = document.getElementById('column-options-container');
+            const currentCols = loadColumnSettings();
+            
+            container.innerHTML = '';
+            AVAILABLE_COLUMNS.forEach(col => {
+                const div = document.createElement('div');
+                div.className = 'checkbox-label';
+                div.innerHTML = `
+                    <input type="checkbox" id="col-chk-${col.id}" value="${col.id}" ${currentCols.includes(col.id) ? 'checked' : ''}>
+                    <label for="col-chk-${col.id}">${col.label}</label>
+                `;
+                container.appendChild(div);
+            });
+
+            const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(chk => {
+                chk.addEventListener('change', () => {
+                    const newCols = Array.from(checkboxes).filter(c => c.checked).map(c => c.value);
+                    saveColumnSettings(newCols);
+                });
+            });
+        }
+
+        document.getElementById('col-settings-btn').addEventListener('click', () => {
+            setupColumnModal();
+            document.getElementById('column-modal').classList.add('active');
+        });
+        document.getElementById('close-column-modal').addEventListener('click', () => {
+            document.getElementById('column-modal').classList.remove('active');
         });
 
-        initMultiSelect('category-filter');
-        initMultiSelect('transportadora-filter');
-        initMultiSelect('destinatario-filter');
-
-        // --- KPI CONFIG MODAL ---
-        const kpiConfigData = [
-            { id: 'total-notas', label: 'Total de Notas' },
-            { id: 'valor-total', label: 'Valor Total (NF-e)' },
-            { id: 'frete-total', label: 'Frete Total' },
-            { id: 'peso-total', label: 'Peso Total' },
-            { id: 'ticket-medio', label: 'Ticket Médio' },
-            { id: 'custo-kg', label: 'Custo por KG' }
+        // --- KPI PREFERENCES ---
+        const kpiMap = [
+            { id: 'custo-total', label: 'Custo Total (Mês)' },
+            { id: 'perc-frete', label: '% Frete s/ Nota' },
+            { id: 'custo-ton', label: 'Custo Médio / Ton' },
+            { id: 'nfes-processadas', label: 'NF-es Processadas' },
+            { id: 'taxas-extras', label: 'Taxas Extras' },
+            { id: 'peso-total', label: 'Peso Total (Ton)' },
+            { id: 'valor-notas', label: 'Valor Total Notas' },
+            { id: 'ctes-pendentes', label: 'CT-es Pendentes' }
         ];
 
-        document.getElementById('open-kpi-config').addEventListener('click', () => {
-            const modal = document.getElementById('kpi-config-modal');
-            const list = document.getElementById('kpi-config-list');
-            list.innerHTML = '';
-            kpiConfigData.forEach(kpi => {
-                const card = document.getElementById(`card-${kpi.id}`);
-                const isVisible = card.getAttribute('data-visible') === 'true';
-                const item = document.createElement('div');
-                item.className = 'kpi-config-item';
-                item.innerHTML = `
-                    <label>
-                        <input type="checkbox" data-kpi="${kpi.id}" ${isVisible ? 'checked' : ''}>
-                        ${kpi.label}
-                    </label>
-                `;
-                list.appendChild(item);
-            });
-            modal.classList.add('active');
-        });
+        function loadKpiPreferences() {
+            const saved = localStorage.getItem('kpi_prefs');
+            return saved ? JSON.parse(saved) : kpiMap.map(k => k.id);
+        }
 
-        document.getElementById('close-kpi-config').addEventListener('click', () => {
-            document.getElementById('kpi-config-modal').classList.remove('active');
-        });
-
-        document.getElementById('kpi-config-list').addEventListener('change', (e) => {
-            if (e.target.type === 'checkbox') {
-                const kpiId = e.target.dataset.kpi;
-                const card = document.getElementById(`card-${kpiId}`);
-                card.setAttribute('data-visible', e.target.checked);
-                applyKpiVisibility();
-            }
-        });
+        function saveKpiPreferences(prefs) {
+            localStorage.setItem('kpi_prefs', JSON.stringify(prefs));
+            applyKpiVisibility();
+        }
 
         function applyKpiVisibility() {
-            document.querySelectorAll('.kpi-card').forEach(card => {
-                const visible = card.getAttribute('data-visible') === 'true';
-                card.style.display = visible ? 'flex' : 'none';
-            });
-        }
-
-        // --- INIT MAP ---
-        function initMap() {
-            if (!map) {
-                map = L.map('map').setView([-15.7801, -47.9292], 4);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors'
-                }).addTo(map);
-            }
-        }
-
-        function updateMapMarkers(data) {
-            if (!map) return;
-            
-            markers.forEach(marker => map.removeLayer(marker));
-            markers = [];
-
-            const cityCount = {};
-            data.forEach(item => {
-                const city = item.cidade_destinatario || 'Desconhecido';
-                cityCount[city] = (cityCount[city] || 0) + 1;
-            });
-
-            // Coordenadas aproximadas de algumas cidades brasileiras (exemplo)
-            const cityCoords = {
-                'Brasília': [-15.7801, -47.9292],
-                'São Paulo': [-23.5505, -46.6333],
-                'Rio de Janeiro': [-22.9068, -43.1729],
-                'Belo Horizonte': [-19.9167, -43.9345],
-                'Curitiba': [-25.4284, -49.2733],
-                'Porto Alegre': [-30.0346, -51.2177],
-                'Salvador': [-12.9714, -38.5014],
-                'Fortaleza': [-3.7172, -38.5433],
-                'Recife': [-8.0476, -34.8770],
-                'Manaus': [-3.1190, -60.0217]
-            };
-
-            Object.entries(cityCount).forEach(([city, count]) => {
-                const coords = cityCoords[city];
-                if (coords) {
-                    const marker = L.circleMarker(coords, {
-                        radius: Math.min(5 + count * 2, 30),
-                        fillColor: '#ef4444',
-                        color: '#fff',
-                        weight: 2,
-                        opacity: 1,
-                        fillOpacity: 0.6
-                    }).addTo(map);
-                    
-                    marker.bindPopup(`<strong>${city}</strong><br>${count} frete(s)`);
-                    markers.push(marker);
+            const prefs = loadKpiPreferences();
+            kpiMap.forEach(kpi => {
+                const card = document.getElementById(`card-${kpi.id}`);
+                if (card) {
+                    const isVisible = prefs.includes(kpi.id);
+                    card.dataset.visible = isVisible;
+                    card.style.display = isVisible ? 'flex' : 'none';
                 }
             });
         }
 
-        // --- QUICK REPORTS ---
-        document.querySelectorAll('.quick-report-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const reportType = btn.dataset.report;
-                applyQuickReport(reportType);
+        function setupKpiModal() {
+            const container = document.getElementById('kpi-options-container');
+            const currentPrefs = loadKpiPreferences();
+            container.innerHTML = '';
+            kpiMap.forEach(kpi => {
+                const div = document.createElement('div');
+                div.className = 'checkbox-label';
+                div.innerHTML = `
+                    <input type="checkbox" id="chk-${kpi.id}" value="${kpi.id}" ${currentPrefs.includes(kpi.id) ? 'checked' : ''}>
+                    <label for="chk-${kpi.id}">${kpi.label}</label>
+                `;
+                container.appendChild(div);
             });
+            const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(chk => {
+                chk.addEventListener('change', () => {
+                    const newPrefs = Array.from(checkboxes).filter(c => c.checked).map(c => c.value);
+                    saveKpiPreferences(newPrefs);
+                });
+            });
+        }
+
+        document.getElementById('config-kpi-btn').addEventListener('click', () => {
+            setupKpiModal();
+            document.getElementById('kpi-modal').classList.add('active');
+        });
+        document.getElementById('close-kpi-modal').addEventListener('click', () => {
+            document.getElementById('kpi-modal').classList.remove('active');
         });
 
-        function applyQuickReport(type) {
-            // Limpar filtros
-            document.getElementById('start-date').value = '';
-            document.getElementById('end-date').value = '';
-            document.getElementById('cfop-filter').value = '';
-            document.getElementById('search-consolidated').value = '';
-            
-            // Marcar todos os checkboxes
-            document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = true);
-            
-            switch(type) {
-                case 'geral':
-                    // Todos os dados
-                    break;
-                case 'fama-df-rizzo':
-                    // Filtrar: categoria = saída, destinatário = DF, transportadora = Rizzo
-                    // Implementação simplificada: você pode ajustar conforme sua lógica
-                    selectOnlyCategories(['Saída']);
-                    selectOnlyDestinatarios(['DISTRIBUIDORA FAMA']);
-                    selectOnlyTransportadoras(['RIZZO']);
-                    break;
-                case 'fama-df-outras':
-                    selectOnlyCategories(['Saída']);
-                    selectOnlyDestinatarios(['DISTRIBUIDORA FAMA']);
-                    // Desmarcar Rizzo
-                    document.querySelectorAll('#transportadora-filter input[type="checkbox"]').forEach(cb => {
-                        if (cb.value.includes('RIZZO')) cb.checked = false;
-                    });
-                    break;
-                case 'fama-outros':
-                    selectOnlyCategories(['Saída']);
-                    // Desmarcar DF
-                    document.querySelectorAll('#destinatario-filter input[type="checkbox"]').forEach(cb => {
-                        if (cb.value.includes('DISTRIBUIDORA FAMA')) cb.checked = false;
-                    });
-                    break;
-                case 'fama-compras':
-                    selectOnlyCategories(['Entrada']);
-                    break;
-            }
-            
-            ['category-filter', 'transportadora-filter', 'destinatario-filter'].forEach(id => updateSelectButtonLabel(id));
-            refreshDashboard();
-            showToast(`Relatório "${btn.textContent.trim()}" aplicado.`, 'info');
+        // --- RENDER HELPERS ---
+        function getCategoryBadge(category) {
+            if (!category) return '<span class="badge badge-default">--</span>';
+            const lower = category.toLowerCase();
+            if (lower.includes('venda')) return `<span class="badge badge-venda">${category}</span>`;
+            if (lower.includes('compra')) return `<span class="badge badge-compra">${category}</span>`;
+            if (lower.includes('devolu')) return `<span class="badge badge-devolucao">${category}</span>`;
+            if (lower.includes('transf')) return `<span class="badge badge-transf">${category}</span>`;
+            return `<span class="badge badge-default">${category}</span>`;
         }
 
-        function selectOnlyCategories(cats) {
-            document.querySelectorAll('#category-filter input[type="checkbox"]').forEach(cb => {
-                cb.checked = cats.includes(cb.value);
-            });
+        function renderEmptyState(tbody, message, colspan) {
+            tbody.innerHTML = `
+                <tr><td colspan="${colspan}" class="empty-state-container">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125V6.375c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v.001c0 .621.504 1.125 1.125 1.125z" />
+                    </svg>
+                    <h3>${message}</h3>
+                </td></tr>`;
         }
 
-        function selectOnlyTransportadoras(trans) {
-            document.querySelectorAll('#transportadora-filter input[type="checkbox"]').forEach(cb => {
-                cb.checked = trans.some(t => cb.value.includes(t));
-            });
-        }
-
-        function selectOnlyDestinatarios(dests) {
-            document.querySelectorAll('#destinatario-filter input[type="checkbox"]').forEach(cb => {
-                cb.checked = dests.some(d => cb.value.includes(d));
-            });
-        }
-
-        // --- FETCH & RENDER ---
-        async function fetchAndRenderConsolidatedData(filters) {
-            try {
-                let query = supabase.from('consolidated_view').select('*');
-                if (filters.startDate) query = query.gte('data_emissao', filters.startDate);
-                if (filters.endDate) query = query.lte('data_emissao', filters.endDate);
-
-                const { data, error } = await query;
-                if (error) throw error;
-
-                consolidatedDataCache = data || [];
-
-                const categorias = [...new Set(consolidatedDataCache.map(d => d.category || 'Sem Categoria'))];
-                const transportadoras = [...new Set(consolidatedDataCache.map(d => d.transportadora || 'Desconhecido'))];
-                const destinatarios = [...new Set(consolidatedDataCache.map(d => d.destinatario || 'Desconhecido'))];
-
-                populateMultiSelect('category-filter', categorias);
-                populateMultiSelect('transportadora-filter', transportadoras);
-                populateMultiSelect('destinatario-filter', destinatarios);
-
-                ['category-filter', 'transportadora-filter', 'destinatario-filter'].forEach(id => updateSelectButtonLabel(id));
-
-                renderConsolidatedTable();
-                updateKPIs();
-                updateMapMarkers(consolidatedDataCache);
-            } catch (e) {
-                console.error(e);
-                showToast('Erro ao carregar dados consolidados.', 'error');
-            }
-        }
-
-        function renderConsolidatedTable() {
-            const selectedCategories = getSelectedOptions('category-filter');
-            const selectedTransportadoras = getSelectedOptions('transportadora-filter');
-            const selectedDestinatarios = getSelectedOptions('destinatario-filter');
-            const cfopFilter = document.getElementById('cfop-filter').value.trim();
-            const searchTerm = document.getElementById('search-consolidated').value.toLowerCase();
-
-            let filtered = consolidatedDataCache.filter(item => {
-                const matchCategory = selectedCategories.includes(item.category || 'Sem Categoria');
-                const matchTransportadora = selectedTransportadoras.includes(item.transportadora || 'Desconhecido');
-                const matchDestinatario = selectedDestinatarios.includes(item.destinatario || 'Desconhecido');
-                const matchCfop = cfopFilter ? (item.cfop_original || '').includes(cfopFilter) : true;
-                const matchSearch = !searchTerm || Object.values(item).some(v => String(v).toLowerCase().includes(searchTerm));
-                return matchCategory && matchTransportadora && matchDestinatario && matchCfop && matchSearch;
-            });
-
-            const tbody = document.getElementById('consolidated-tbody');
-            tbody.innerHTML = '';
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 40px; color: var(--text-secondary);">Nenhum dado encontrado.</td></tr>';
+        // --- LOGICA DE DADOS ---
+        function updateKpis(data) {
+            if (!data || data.length === 0) {
+                ['kpi-custo-total', 'kpi-custo-ton', 'kpi-taxas-extras', 'kpi-valor-notas', 'kpi-custo-kg'].forEach(id => document.getElementById(id).textContent = 'R$ 0,00');
+                ['kpi-perc-frete'].forEach(id => document.getElementById(id).textContent = '0,00%');
+                ['kpi-nfes-processadas', 'kpi-ctes-pendentes'].forEach(id => document.getElementById(id).textContent = '0');
+                ['kpi-peso-total'].forEach(id => document.getElementById(id).textContent = '0,00');
                 return;
             }
 
-            filtered.forEach(item => {
-                const custoKg = item.peso_ton > 0 ? (item.custo_frete / (item.peso_ton * 1000)) : 0;
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><span class="status-badge ${item.category === 'Entrada' ? 'entrada' : 'saida'}">${item.category || '--'}</span></td>
-                    <td style="font-size: 11px; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${item.chave_nfe || '--'}</td>
-                    <td>${formatDate(item.data_emissao)}</td>
-                    <td>${item.destinatario || '--'}</td>
-                    <td>${item.cidade_destinatario || '--'}/${item.uf_destinatario || '--'}</td>
-                    <td>${item.transportadora || '--'}</td>
-                    <td class="highlight">${formatCurrency(item.valor_nota)}</td>
-                    <td class="highlight">${formatCurrency(item.custo_frete)}</td>
-                    <td>${formatDecimal(item.peso_ton)}</td>
-                    <td>${formatCurrency(custoKg)}</td>
-                    <td>
-                        <button class="action-btn" onclick="openAuditModal('${item.chave_nfe}')" title="Auditoria"><i class="fas fa-search"></i></button>
-                        <button class="action-btn" onclick="viewDetails('${item.xml_link || ''}')" title="Ver XML"><i class="fas fa-file-code"></i></button>
-                        <button class="action-btn delete" onclick="deleteRecord('${item.chave_nfe}')" title="Excluir"><i class="fas fa-trash"></i></button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+            const totals = data.reduce((acc, item) => {
+                acc.custoTotal += item.custo_frete || 0;
+                acc.valorTotalNota += item.valor_nota || 0;
+                acc.pesoTotalTon += item.peso_ton || 0;
+                acc.custoTaxasExtras += (item.valor_agendamento || 0) + (item.valor_reentrega || 0) + (item.valor_pedagio || 0);
+                if ((item.qtd_ctes || 0) === 0) acc.ctesPendentes += 1;
+                return acc;
+            }, { custoTotal: 0, valorTotalNota: 0, pesoTotalTon: 0, ctesPendentes: 0, custoTaxasExtras: 0 });
+
+            const percentualFreteMedio = totals.valorTotalNota > 0 ? (totals.custoTotal / totals.valorTotalNota) * 100 : 0;
+            const custoMedioPorTon = totals.pesoTotalTon > 0 ? totals.custoTotal / totals.pesoTotalTon : 0;
+            const custoMedioPorKg = totals.pesoTotalTon > 0 ? totals.custoTotal / (totals.pesoTotalTon * 1000) : 0;
+
+            document.getElementById('kpi-custo-total').textContent = formatCurrency(totals.custoTotal);
+            document.getElementById('kpi-perc-frete').textContent = `${percentualFreteMedio.toFixed(2).replace('.',',')}%`;
+            document.getElementById('kpi-custo-ton').textContent = formatCurrency(custoMedioPorTon);
+            document.getElementById('kpi-nfes-processadas').textContent = data.length;
+            document.getElementById('kpi-taxas-extras').textContent = formatCurrency(totals.custoTaxasExtras);
+            document.getElementById('kpi-peso-total').textContent = totals.pesoTotalTon.toFixed(3).replace('.',',');
+            document.getElementById('kpi-valor-notas').textContent = formatCurrency(totals.valorTotalNota);
+            document.getElementById('kpi-ctes-pendentes').textContent = totals.ctesPendentes;
+            document.getElementById('kpi-custo-kg').textContent = formatCurrency(custoMedioPorKg);
         }
 
-        function updateKPIs() {
-            const selectedCategories = getSelectedOptions('category-filter');
-            const selectedTransportadoras = getSelectedOptions('transportadora-filter');
-            const selectedDestinatarios = getSelectedOptions('destinatario-filter');
-            const cfopFilter = document.getElementById('cfop-filter').value.trim();
+        function populateDynamicFilters(data) {
+            const createCheckboxItem = (value, containerId) => {
+                const div = document.createElement('div');
+                div.className = 'dropdown-item';
+                div.innerHTML = `<input type="checkbox" value="${value}" checked> ${value}`;
+                return div;
+            };
 
-            const filtered = consolidatedDataCache.filter(item => {
-                const matchCategory = selectedCategories.includes(item.category || 'Sem Categoria');
-                const matchTransportadora = selectedTransportadoras.includes(item.transportadora || 'Desconhecido');
-                const matchDestinatario = selectedDestinatarios.includes(item.destinatario || 'Desconhecido');
-                const matchCfop = cfopFilter ? (item.cfop_original || '').includes(cfopFilter) : true;
-                return matchCategory && matchTransportadora && matchDestinatario && matchCfop;
+            const transportadoras = new Set();
+            const destinatarios = new Set();
+            data.forEach(item => {
+                if(item.nome_transportadora) transportadoras.add(item.nome_transportadora);
+                if(item.cliente_destinatario) destinatarios.add(item.cliente_destinatario);
             });
 
-            const totalNotas = filtered.length;
-            const valorTotal = filtered.reduce((s, i) => s + (parseFloat(i.valor_nota) || 0), 0);
-            const freteTotal = filtered.reduce((s, i) => s + (parseFloat(i.custo_frete) || 0), 0);
-            const pesoTotal = filtered.reduce((s, i) => s + (parseFloat(i.peso_ton) || 0), 0);
-            const ticketMedio = totalNotas > 0 ? valorTotal / totalNotas : 0;
-            const custoKg = pesoTotal > 0 ? freteTotal / (pesoTotal * 1000) : 0;
+            // Transportadora
+            const tContainer = document.getElementById('list-transportadora-filter');
+            const currentT = getSelectedOptions('transportadora-filter');
+            const hasCurrentT = currentT.length > 0;
+            
+            tContainer.innerHTML = '';
+            Array.from(transportadoras).sort().forEach(t => {
+                const div = createCheckboxItem(t);
+                if (hasCurrentT && !currentT.includes(t)) div.querySelector('input').checked = false;
+                tContainer.appendChild(div);
+            });
+            updateSelectButtonLabel('transportadora-filter', 'Todas');
 
-            document.querySelector('#card-total-notas .value').textContent = totalNotas;
-            document.querySelector('#card-valor-total .value').textContent = formatCurrency(valorTotal);
-            document.querySelector('#card-frete-total .value').textContent = formatCurrency(freteTotal);
-            document.querySelector('#card-peso-total .value').textContent = formatDecimal(pesoTotal) + ' ton';
-            document.querySelector('#card-ticket-medio .value').textContent = formatCurrency(ticketMedio);
-            document.querySelector('#card-custo-kg .value').textContent = formatCurrency(custoKg);
+            // Destinatario
+            const dContainer = document.getElementById('list-destinatario-filter');
+            const currentD = getSelectedOptions('destinatario-filter');
+            const hasCurrentD = currentD.length > 0;
+
+            dContainer.innerHTML = '';
+            Array.from(destinatarios).sort().forEach(d => {
+                const div = createCheckboxItem(d);
+                if (hasCurrentD && !currentD.includes(d)) div.querySelector('input').checked = false;
+                dContainer.appendChild(div);
+            });
+            updateSelectButtonLabel('destinatario-filter', 'Todos');
+
+            document.querySelectorAll('#dropdown-transportadora-filter input').forEach(i => i.addEventListener('change', () => updateSelectButtonLabel('transportadora-filter')));
+            document.querySelectorAll('#dropdown-category-filter input').forEach(i => i.addEventListener('change', () => updateSelectButtonLabel('category-filter')));
+            document.querySelectorAll('#dropdown-destinatario-filter input').forEach(i => i.addEventListener('change', () => updateSelectButtonLabel('destinatario-filter')));
+        }
+
+        async function fetchAndRenderConsolidatedData(filters) {
+            let query = supabase.from('relatorio_consolidado').select('*').eq('ignorado', false).order('data_emissao_nfe', { ascending: false });
+            
+            if (filters.startDate) query = query.gte('data_emissao_nfe', filters.startDate);
+            if (filters.endDate) query = query.lte('data_emissao_nfe', filters.endDate);
+            if (filters.cfop) query = query.like('cfop_original', `%${filters.cfop}%`);
+            
+            const categories = getSelectedOptions('category-filter');
+            if (categories.length > 0) query = query.in('categoria_frete', categories);
+
+            const carriers = getSelectedOptions('transportadora-filter');
+            if (carriers.length > 0) query = query.in('nome_transportadora', carriers);
+
+            const clients = getSelectedOptions('destinatario-filter');
+            if (clients.length > 0) query = query.in('cliente_destinatario', clients);
+
+            const { data, error } = await query;
+            if (error) { 
+                console.error('Erro:', error);
+                showToast('Erro ao buscar dados.', 'error');
+                return; 
+            }
+
+            consolidatedDataCache = data || [];
+            updateKpis(data);
+            
+            // Popula filtros apenas se a lista estiver vazia (primeira carga ou limpeza)
+            const tContainer = document.getElementById('list-transportadora-filter');
+            if(tContainer.children.length === 0) populateDynamicFilters(data);
+
+            applyTextFilter(); 
+        }
+
+        function applyTextFilter() {
+            const searchText = document.getElementById('search-consolidated').value.toLowerCase();
+            
+            if (!searchText) {
+                filteredConsolidatedData = consolidatedDataCache;
+            } else {
+                filteredConsolidatedData = consolidatedDataCache.filter(item => {
+                    return (
+                        (item.chave_nfe && item.chave_nfe.toLowerCase().includes(searchText)) ||
+                        (item.cliente_destinatario && item.cliente_destinatario.toLowerCase().includes(searchText)) ||
+                        (item.nome_transportadora && item.nome_transportadora.toLowerCase().includes(searchText)) ||
+                        (item.informacoes_complementares && item.informacoes_complementares.toLowerCase().includes(searchText)) ||
+                        (item.observacao_cte && item.observacao_cte.toLowerCase().includes(searchText)) ||
+                        (item.valor_nota && item.valor_nota.toString().includes(searchText))
+                    );
+                });
+            }
+            renderConsolidatedTable();
+        }
+
+        document.getElementById('search-consolidated').addEventListener('keyup', debounce(() => {
+            applyTextFilter();
+        }, 300));
+
+        function renderConsolidatedTable() {
+            const data = filteredConsolidatedData;
+            const visibleCols = loadColumnSettings();
+            
+            // 1. Render Header
+            consolidatedTableHead.innerHTML = '';
+            const trHead = document.createElement('tr');
+            AVAILABLE_COLUMNS.forEach(col => {
+                if (visibleCols.includes(col.id)) {
+                    const th = document.createElement('th');
+                    th.className = col.sortable ? 'sortable' : '';
+                    if (col.align) th.className += ` text-${col.align}`;
+                    th.textContent = col.label;
+                    trHead.appendChild(th);
+                }
+            });
+            consolidatedTableHead.appendChild(trHead);
+
+            // 2. Render Body
+            consolidatedTableBody.innerHTML = '';
+            if (!data || data.length === 0) {
+                renderEmptyState(consolidatedTableBody, "Nenhum dado encontrado.", visibleCols.length);
+                return;
+            }
+
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                let html = '';
+                
+                if(visibleCols.includes('data')) html += `<td>${new Date(item.data_emissao_nfe).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>`;
+                if(visibleCols.includes('chave')) html += `<td><span title="${item.chave_nfe}">${item.chave_nfe.substring(0, 20)}...</span></td>`;
+                if(visibleCols.includes('destinatario')) html += `<td>${item.cliente_destinatario || '--'}</td>`;
+                if(visibleCols.includes('transportadora')) html += `<td>${item.nome_transportadora || '--'}</td>`;
+                if(visibleCols.includes('operacao')) html += `<td>${getCategoryBadge(item.categoria_frete)}</td>`;
+                if(visibleCols.includes('cfop')) html += `<td>${item.cfop_original || '--'}</td>`;
+                if(visibleCols.includes('volumes')) html += `<td>${item.quantidade_volumes || '--'}</td>`;
+                if(visibleCols.includes('especie')) html += `<td>${item.especie || '--'}</td>`;
+                if(visibleCols.includes('info')) html += `<td><span title="${item.info_complementar || ''}">${(item.info_complementar || '--').substring(0,30)}...</span></td>`;
+                if(visibleCols.includes('obs_cte')) html += `<td><span title="${item.observacao_cte || ''}">${(item.observacao_cte || '--').substring(0,30)}...</span></td>`;
+                if(visibleCols.includes('valor_nota')) html += `<td class="text-right text-mono">${formatCurrency(item.valor_nota)}</td>`;
+                if(visibleCols.includes('peso')) html += `<td class="text-right text-mono">${formatDecimal(item.peso_ton)}</td>`;
+                if(visibleCols.includes('frete_total')) html += `<td class="text-right text-mono" style="font-weight:600;">${formatCurrency(item.custo_frete)}</td>`;
+                if(visibleCols.includes('perc_frete')) html += `<td class="text-right text-mono">${(item.percentual_frete_nota || 0).toFixed(2).replace('.',',')}%</td>`;
+                if(visibleCols.includes('custo_kg')) {
+                    const custoKg = item.peso_ton > 0 ? (item.custo_frete / (item.peso_ton * 1000)) : 0;
+                    html += `<td class="text-right text-mono">${formatCurrency(custoKg)}</td>`;
+                }
+                if(visibleCols.includes('agendamento')) html += `<td class="text-right text-mono">${formatCurrencyOrDash(item.valor_agendamento)}</td>`;
+                if(visibleCols.includes('reentrega')) html += `<td class="text-right text-mono">${formatCurrencyOrDash(item.valor_reentrega)}</td>`;
+                if(visibleCols.includes('pedagio')) html += `<td class="text-right text-mono">${formatCurrencyOrDash(item.valor_pedagio)}</td>`;
+                if(visibleCols.includes('ctes')) html += `<td class="text-center">${item.qtd_ctes || 0}</td>`;
+                if(visibleCols.includes('acoes')) {
+                    html += `
+                    <td>
+                        <button class="action-btn" title="Auditoria Detalhada" onclick="window.openAuditModal('${item.chave_nfe}')">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                        <button class="action-btn" title="Visualizar XML Principal" onclick="window.viewDetails('${item.link_xml_principal}')">
+                            <i class="fas fa-file-code"></i>
+                        </button>
+                        <button class="action-btn" title="Excluir do Relatório" onclick="window.deleteRecord('${item.chave_nfe}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>`;
+                }
+                
+                tr.innerHTML = html;
+                consolidatedTableBody.appendChild(tr);
+            });
+            
+            // Atualizar mapa com os dados filtrados
+            updateMapMarkers(data);
         }
 
         async function fetchAndRenderRawData(startDate, endDate) {
-            try {
-                let nfeQuery = supabase.from('nfe_data').select('*');
-                let cteQuery = supabase.from('cte_data').select('*');
-                if (startDate) {
-                    nfeQuery = nfeQuery.gte('data_emissao', startDate);
-                    cteQuery = cteQuery.gte('data_emissao', startDate);
-                }
-                if (endDate) {
-                    nfeQuery = nfeQuery.lte('data_emissao', endDate);
-                    cteQuery = cteQuery.lte('data_emissao', endDate);
-                }
+            let ctesQuery = supabase.from('ctes_processados').select('*').order('created_at', { ascending: false });
+            let nfesQuery = supabase.from('nfes_processadas').select('*').order('created_at', { ascending: false });
 
-                const [nfeRes, cteRes] = await Promise.all([nfeQuery, cteQuery]);
-                if (nfeRes.error) throw nfeRes.error;
-                if (cteRes.error) throw cteRes.error;
-
-                rawDataCache.nfe = nfeRes.data || [];
-                rawDataCache.cte = cteRes.data || [];
-
-                renderRawDataTable();
-            } catch (e) {
-                console.error(e);
-                showToast('Erro ao carregar dados brutos.', 'error');
+            if (startDate) {
+                ctesQuery = ctesQuery.gte('created_at', startDate);
+                nfesQuery = nfesQuery.gte('created_at', startDate);
             }
+            if (endDate) {
+                let endOfDay = new Date(endDate); endOfDay.setHours(23, 59, 59, 999);
+                ctesQuery = ctesQuery.lte('created_at', endOfDay.toISOString());
+                nfesQuery = nfesQuery.lte('created_at', endOfDay.toISOString());
+            }
+
+            const [{data: ctes}, {data: nfes}] = await Promise.all([ctesQuery, nfesQuery]);
+            
+            rawDataSource = [
+                ...(ctes || []).map(d => ({ ...d, type: 'CT-e', key: d.chave_acesso_propria, value: d.valor_servico, link: d.link_xml, transportadora: d.nome_transportadora, tipo_servico: d.tipo_servico_cte })),
+                ...(nfes || []).map(d => ({ ...d, type: 'NF-e', key: d.chave_acesso_propria, value: d.valor_total_nota, link: d.link_xml, transportadora: d.nome_transportadora || '--', tipo_servico: '--' }))
+            ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            
+            renderRawDataTable();
         }
 
         function renderRawDataTable() {
-            const tbody = document.getElementById('raw-data-tbody');
-            tbody.innerHTML = '';
-
-            let dataToShow = [];
-            if (currentRawDataFilter === 'all') {
-                dataToShow = [
-                    ...rawDataCache.nfe.map(d => ({ ...d, tipo: 'NF-e' })),
-                    ...rawDataCache.cte.map(d => ({ ...d, tipo: 'CT-e' }))
-                ];
-            } else if (currentRawDataFilter === 'nfe') {
-                dataToShow = rawDataCache.nfe.map(d => ({ ...d, tipo: 'NF-e' }));
-            } else {
-                dataToShow = rawDataCache.cte.map(d => ({ ...d, tipo: 'CT-e' }));
-            }
-
-            if (dataToShow.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color: var(--text-secondary);">Nenhum dado bruto disponível.</td></tr>';
+            const filteredData = rawDataSource.filter(item => currentRawDataFilter === 'all' || item.type === currentRawDataFilter);
+            if (filteredData.length === 0) {
+                renderEmptyState(rawDataTableBody, "Nenhum documento encontrado.", 7);
                 return;
             }
-
-            dataToShow.forEach(item => {
+            rawDataTableBody.innerHTML = '';
+            filteredData.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><span class="status-badge ${item.tipo === 'NF-e' ? 'saida' : 'entrada'}">${item.tipo}</span></td>
-                    <td style="font-size: 11px; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${item.chave || '--'}</td>
-                    <td>${formatDate(item.data_emissao)}</td>
-                    <td>${item.emitente || '--'}</td>
-                    <td>${item.destinatario || '--'}</td>
-                    <td class="highlight">${formatCurrency(item.valor_total)}</td>
+                    <td>${new Date(item.created_at).toLocaleString('pt-BR')}</td>
+                    <td><span class="tag">${item.type}</span></td>
+                    <td>${item.key.substring(0, 20)}...</td>
+                    <td>${item.transportadora || '--'}</td>
+                    <td>${item.tipo_servico || '--'}</td>
+                    <td class="text-right text-mono">${formatCurrency(item.value)}</td>
                     <td>
-                        <button class="action-btn" onclick="viewDetails('${item.xml_link || ''}')" title="Ver XML"><i class="fas fa-file-code"></i></button>
-                        <button class="action-btn delete" onclick="deleteRecord('${item.chave}')" title="Excluir"><i class="fas fa-trash"></i></button>
+                        <button class="action-btn" onclick="window.viewDetails('${item.link}')"><i class="fas fa-eye"></i></button>
                     </td>
                 `;
-                tbody.appendChild(tr);
+                rawDataTableBody.appendChild(tr);
             });
         }
 
+        // --- EXPORT TO EXCEL ---
         function exportToExcel() {
-            const ws = XLSX.utils.json_to_sheet(consolidatedDataCache);
+            if (!filteredConsolidatedData || filteredConsolidatedData.length === 0) {
+                showToast("Não há dados para exportar.", "warning");
+                return;
+            }
+            
+            const dataToExport = filteredConsolidatedData.map(item => ({
+                'Data Emissão': new Date(item.data_emissao_nfe).toLocaleDateString('pt-BR'),
+                'Chave NFe': item.chave_nfe,
+                'Destinatário': item.cliente_destinatario,
+                'Transportadora': item.nome_transportadora,
+                'UF': item.uf_destino,
+                'Operação': item.categoria_frete,
+                'CFOP': item.cfop_original,
+                'Volumes': item.quantidade_volumes,
+                'Espécie': item.especie,
+                'Info. Compl.': item.info_complementar,
+                'Obs. CTe': item.observacao_cte,
+                'Valor Nota': item.valor_nota,
+                'Peso (Ton)': item.peso_ton,
+                'Custo Frete': item.custo_frete,
+                '% Frete': (item.percentual_frete_nota || 0) / 100,
+                'Valor Agendamento': item.valor_agendamento,
+                'Valor Reentrega': item.valor_reentrega,
+                'Valor Pedágio': item.valor_pedagio,
+                'Qtd CTEs': item.qtd_ctes
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(dataToExport);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Fretes');
-            XLSX.writeFile(wb, 'fretes_fama.xlsx');
-            showToast('Exportação concluída!', 'success');
+            XLSX.utils.book_append_sheet(wb, ws, "Relatório Consolidado");
+            XLSX.writeFile(wb, `Relatorio_Fretes_FAMA_${new Date().toISOString().split('T')[0]}.xlsx`);
+            showToast("Download iniciado!", "success");
         }
 
-        document.getElementById('search-consolidated').addEventListener('input', renderConsolidatedTable);
+        // --- ACTIONS & REFRESH ---
+        const debouncedRefresh = debounce(refreshDashboard, 2000);
 
-        async function refreshDashboard() {
+        async function refreshDashboard(shouldFetch = true) {
+            if (!shouldFetch) {
+                renderConsolidatedTable();
+                return;
+            }
+            
             const filters = {
                 startDate: document.getElementById('start-date').value,
-                endDate: document.getElementById('end-date').value
+                endDate: document.getElementById('end-date').value,
+                cfop: document.getElementById('cfop-filter').value.trim()
                 // other filters are grabbed inside fetchAndRenderConsolidatedData via getSelectedOptions
             };
             
@@ -1689,11 +1506,6 @@
                 button.classList.add('active');
                 document.querySelectorAll('.view-content').forEach(c => c.classList.remove('active'));
                 document.getElementById(button.dataset.view).classList.add('active');
-                
-                // Invalidar tamanho do mapa quando a aba consolidada for ativada
-                if (button.dataset.view === 'consolidated-view' && map) {
-                    setTimeout(() => map.invalidateSize(), 100);
-                }
             });
         });
 
@@ -1834,6 +1646,83 @@
             document.getElementById('logo-img').src = document.body.classList.contains('dark-theme') ? 
                 'https://ctfamadobrasil.com.br/wp-content/uploads/2025/12/Gemini_Generated_Image_v8cib8v8cib8v8ci-removebg-preview.png' : 
                 'https://ctfamadobrasil.com.br/wp-content/uploads/2025/09/logo.png';
+        });
+
+        // --- MAPA DO BRASIL ---
+        let map = null;
+        let markers = [];
+
+        function initMap() {
+            if (!map) {
+                map = L.map('map').setView([-15.7801, -47.9292], 4);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap'
+                }).addTo(map);
+            }
+        }
+
+        function updateMapMarkers(data) {
+            if (!map) return;
+            
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+
+            const cityCount = {};
+            data.forEach(item => {
+                const city = item.cidade_destinatario || 'Desconhecido';
+                cityCount[city] = (cityCount[city] || 0) + 1;
+            });
+
+            const cityCoords = {
+                'BRASILIA': [-15.7801, -47.9292],
+                'SAO PAULO': [-23.5505, -46.6333],
+                'RIO DE JANEIRO': [-22.9068, -43.1729],
+                'BELO HORIZONTE': [-19.9167, -43.9345],
+                'CURITIBA': [-25.4284, -49.2733],
+                'PORTO ALEGRE': [-30.0346, -51.2177],
+                'SALVADOR': [-12.9714, -38.5014],
+                'FORTALEZA': [-3.7172, -38.5433],
+                'RECIFE': [-8.0476, -34.8770],
+                'MANAUS': [-3.1190, -60.0217]
+            };
+
+            Object.entries(cityCount).forEach(([city, count]) => {
+                const coords = cityCoords[city.toUpperCase()];
+                if (coords) {
+                    const marker = L.circleMarker(coords, {
+                        radius: Math.min(8 + count * 1.5, 25),
+                        fillColor: '#ef4444',
+                        color: '#fff',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.7
+                    }).addTo(map);
+                    
+                    marker.bindPopup(`<strong>${city}</strong><br>${count} frete(s)`);
+                    markers.push(marker);
+                }
+            });
+        }
+
+        // --- RELATÓRIOS RÁPIDOS ---
+        document.querySelectorAll('.quick-report-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const reportType = btn.dataset.report;
+                
+                // Limpar filtros
+                document.getElementById('start-date').value = '';
+                document.getElementById('end-date').value = '';
+                document.getElementById('cfop-filter').value = '';
+                
+                // Marcar todos os checkboxes
+                document.querySelectorAll('.dropdown-content input[type="checkbox"]').forEach(c => c.checked = true);
+                
+                // Aplicar filtros específicos baseados no tipo de relatório
+                // (Aqui você pode adicionar lógica específica para cada relatório)
+                
+                refreshDashboard();
+                showToast(`Relatório aplicado: ${btn.textContent.trim()}`, 'info');
+            });
         });
 
         // Init
