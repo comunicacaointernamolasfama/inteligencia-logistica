@@ -390,6 +390,46 @@
             height: 400px;
             width: 100%;
         }
+        .state-label {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            font-weight: 600;
+            color: #374151;
+            font-size: 11px;
+        }
+        body.dark-theme .state-label {
+            color: #f9fafb;
+        }
+        .map-legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            z-index: 1000;
+            font-size: 11px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .map-legend h4 {
+            margin: 0 0 8px 0;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
 
         /* --- Abas --- */
         .view-tabs { margin-bottom: 24px; border-bottom: 1px solid var(--border-color); }
@@ -778,7 +818,31 @@
                 <div class="map-header">
                     <i class="fas fa-map-marked-alt"></i> Mapa Geográfico de Fretes
                 </div>
-                <div id="map"></div>
+                <div id="map" style="position: relative;">
+                    <div class="map-legend">
+                        <h4>Regiões do Brasil</h4>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #3b82f6;"></div>
+                            <span>Norte</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #f59e0b;"></div>
+                            <span>Nordeste</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #10b981;"></div>
+                            <span>Centro-Oeste</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #ef4444;"></div>
+                            <span>Sudeste</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #8b5cf6;"></div>
+                            <span>Sul</span>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <div class="table-toolbar">
@@ -1650,78 +1714,149 @@
 
         // --- MAPA DO BRASIL ---
         let map = null;
-        let markers = [];
+        let brazilLayer = null;
+        const regionColors = {
+            'Norte': '#3b82f6',
+            'Nordeste': '#f59e0b',
+            'Centro-Oeste': '#10b981',
+            'Sudeste': '#ef4444',
+            'Sul': '#8b5cf6'
+        };
+
+        const stateToRegion = {
+            'AC': 'Norte', 'AM': 'Norte', 'AP': 'Norte', 'PA': 'Norte', 'RO': 'Norte', 'RR': 'Norte', 'TO': 'Norte',
+            'AL': 'Nordeste', 'BA': 'Nordeste', 'CE': 'Nordeste', 'MA': 'Nordeste', 'PB': 'Nordeste', 'PE': 'Nordeste', 'PI': 'Nordeste', 'RN': 'Nordeste', 'SE': 'Nordeste',
+            'DF': 'Centro-Oeste', 'GO': 'Centro-Oeste', 'MT': 'Centro-Oeste', 'MS': 'Centro-Oeste',
+            'ES': 'Sudeste', 'MG': 'Sudeste', 'RJ': 'Sudeste', 'SP': 'Sudeste',
+            'PR': 'Sul', 'RS': 'Sul', 'SC': 'Sul'
+        };
 
         function initMap() {
             if (!map) {
-                map = L.map('map').setView([-15.7801, -47.9292], 4);
+                map = L.map('map', {
+                    center: [-14.2350, -51.9253],
+                    zoom: 4,
+                    zoomControl: true
+                });
+                
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© OpenStreetMap'
                 }).addTo(map);
+
+                // Carregar GeoJSON do Brasil
+                fetch('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson')
+                    .then(response => response.json())
+                    .then(data => {
+                        brazilLayer = L.geoJSON(data, {
+                            style: feature => ({
+                                fillColor: '#e5e7eb',
+                                weight: 1,
+                                opacity: 1,
+                                color: '#6b7280',
+                                fillOpacity: 0.3
+                            }),
+                            onEachFeature: (feature, layer) => {
+                                layer.bindTooltip(feature.properties.name, {
+                                    permanent: false,
+                                    direction: 'center',
+                                    className: 'state-label'
+                                });
+                            }
+                        }).addTo(map);
+                    });
             }
         }
 
         function updateMapMarkers(data) {
-            if (!map) return;
+            if (!map || !brazilLayer) return;
             
-            markers.forEach(m => map.removeLayer(m));
-            markers = [];
-
-            const cityCount = {};
+            // Contar fretes por UF
+            const ufCount = {};
+            const ufValue = {};
+            
             data.forEach(item => {
-                const city = item.cidade_destinatario || 'Desconhecido';
-                cityCount[city] = (cityCount[city] || 0) + 1;
+                const uf = item.uf_destinatario;
+                if (uf) {
+                    ufCount[uf] = (ufCount[uf] || 0) + 1;
+                    ufValue[uf] = (ufValue[uf] || 0) + (item.custo_frete || 0);
+                }
             });
 
-            const cityCoords = {
-                'BRASILIA': [-15.7801, -47.9292],
-                'SAO PAULO': [-23.5505, -46.6333],
-                'RIO DE JANEIRO': [-22.9068, -43.1729],
-                'BELO HORIZONTE': [-19.9167, -43.9345],
-                'CURITIBA': [-25.4284, -49.2733],
-                'PORTO ALEGRE': [-30.0346, -51.2177],
-                'SALVADOR': [-12.9714, -38.5014],
-                'FORTALEZA': [-3.7172, -38.5433],
-                'RECIFE': [-8.0476, -34.8770],
-                'MANAUS': [-3.1190, -60.0217]
-            };
-
-            Object.entries(cityCount).forEach(([city, count]) => {
-                const coords = cityCoords[city.toUpperCase()];
-                if (coords) {
-                    const marker = L.circleMarker(coords, {
-                        radius: Math.min(8 + count * 1.5, 25),
-                        fillColor: '#ef4444',
-                        color: '#fff',
+            // Encontrar valores máximos para normalização
+            const maxCount = Math.max(...Object.values(ufCount), 1);
+            
+            // Atualizar estilo de cada estado
+            brazilLayer.eachLayer(layer => {
+                const stateName = layer.feature.properties.name;
+                const uf = layer.feature.properties.sigla || getUFFromName(stateName);
+                const count = ufCount[uf] || 0;
+                const value = ufValue[uf] || 0;
+                const region = stateToRegion[uf];
+                
+                if (count > 0) {
+                    const opacity = 0.3 + (count / maxCount) * 0.6;
+                    layer.setStyle({
+                        fillColor: regionColors[region] || '#ef4444',
+                        fillOpacity: opacity,
                         weight: 2,
-                        opacity: 1,
-                        fillOpacity: 0.7
-                    }).addTo(map);
+                        color: '#fff'
+                    });
                     
-                    marker.bindPopup(`<strong>${city}</strong><br>${count} frete(s)`);
-                    markers.push(marker);
+                    layer.bindPopup(`
+                        <strong>${stateName} (${uf})</strong><br>
+                        Região: ${region}<br>
+                        Fretes: ${count}<br>
+                        Total: ${formatCurrency(value)}
+                    `);
+                } else {
+                    layer.setStyle({
+                        fillColor: '#e5e7eb',
+                        fillOpacity: 0.3,
+                        weight: 1,
+                        color: '#6b7280'
+                    });
+                    layer.unbindPopup();
                 }
             });
         }
 
+        function getUFFromName(name) {
+            const nameMap = {
+                'Acre': 'AC', 'Alagoas': 'AL', 'Amapá': 'AP', 'Amazonas': 'AM',
+                'Bahia': 'BA', 'Ceará': 'CE', 'Distrito Federal': 'DF', 'Espírito Santo': 'ES',
+                'Goiás': 'GO', 'Maranhão': 'MA', 'Mato Grosso': 'MT', 'Mato Grosso do Sul': 'MS',
+                'Minas Gerais': 'MG', 'Pará': 'PA', 'Paraíba': 'PB', 'Paraná': 'PR',
+                'Pernambuco': 'PE', 'Piauí': 'PI', 'Rio de Janeiro': 'RJ', 'Rio Grande do Norte': 'RN',
+                'Rio Grande do Sul': 'RS', 'Rondônia': 'RO', 'Roraima': 'RR', 'Santa Catarina': 'SC',
+                'São Paulo': 'SP', 'Sergipe': 'SE', 'Tocantins': 'TO'
+            };
+            return nameMap[name] || '';
+        }
+
         // --- RELATÓRIOS RÁPIDOS ---
         document.querySelectorAll('.quick-report-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', async () => {
                 const reportType = btn.dataset.report;
                 
-                // Limpar filtros
-                document.getElementById('start-date').value = '';
-                document.getElementById('end-date').value = '';
-                document.getElementById('cfop-filter').value = '';
-                
-                // Marcar todos os checkboxes
-                document.querySelectorAll('.dropdown-content input[type="checkbox"]').forEach(c => c.checked = true);
-                
-                // Aplicar filtros específicos baseados no tipo de relatório
-                // (Aqui você pode adicionar lógica específica para cada relatório)
-                
-                refreshDashboard();
-                showToast(`Relatório aplicado: ${btn.textContent.trim()}`, 'info');
+                try {
+                    showToast('Carregando relatório...', 'info');
+                    
+                    // Chamar função RPC do Supabase
+                    const { data, error } = await supabase.rpc('get_strategic_report', {
+                        report_name: reportType
+                    });
+                    
+                    if (error) throw error;
+                    
+                    // Atualizar cache e renderizar
+                    consolidatedDataSource = data || [];
+                    applyFilters();
+                    
+                    showToast(`Relatório "${btn.textContent.trim()}" aplicado com sucesso!`, 'success');
+                } catch (error) {
+                    console.error('Erro ao carregar relatório:', error);
+                    showToast('Erro ao carregar relatório estratégico.', 'error');
+                }
             });
         });
 
