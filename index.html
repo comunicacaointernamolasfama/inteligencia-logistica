@@ -746,6 +746,10 @@
                     <i class="fas fa-shopping-cart"></i>
                     Fama (Compras)
                 </button>
+                 <button class="quick-report-btn" data-report="df-vendas">
+                    <i class="fas fa-store"></i>
+                    DF → Clientes Gerais
+                </button>
             </div>
         </div>
 
@@ -984,7 +988,7 @@
 
         // --- CONFIGURAÇÃO ---
         const SUPABASE_URL = 'https://pdqkvyxufnprapkgsvxx.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkcWt2eXh1Zm5wcmFwa2dzdnh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMDE2MzAsImV4cCI6MjA3ODc3NzYzMH0.CFxmP1S8829joB6txKQ4bypp-Qr7SDHAg0P2Dgpti1k';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkcWt2eXh1Zm5wcmFwa2dzdnh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMDE2MzAsImV4cCI6MjA3ODc7NzYzMH0.CFxmP1S8829joB6txKQ4bypp-Qr7SDHAg0P2Dgpti1k';
         const N8N_QUEUE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/receber-xml';
         const N8N_DELETE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/excluir-registro-relatorio-cte';
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -1031,6 +1035,16 @@
         const formatCurrency = (val) => (val || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const formatCurrencyOrDash = (val) => (val && val !== 0) ? val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '<span style="color:var(--text-secondary); opacity:0.5;">--</span>';
         const formatDecimal = (val) => (val || 0).toFixed(3).replace('.',',');
+        
+        // --- FUNÇÃO AUXILIAR PARA O SEMÁFORO ---
+        function getFretePercentageStyle(percentage) {
+            const perc = percentage || 0;
+            if (perc > 8)  return 'background-color: rgba(239, 68, 68, 0.25);';   // Vermelho (Crítico)
+            if (perc > 7) return 'background-color: rgba(249, 115, 22, 0.25);'; // Laranja (Alerta)
+            if (perc > 5) return 'background-color: rgba(234, 179, 8, 0.25);';  // Amarelo (Atenção)
+            if (perc > 0) return 'background-color: rgba(16, 185, 129, 0.15);'; // Verde (Saudável)
+            return ''; // Padrão
+        }
 
         // --- STATE MANAGEMENT ---
         const consolidatedTableBody = document.getElementById('consolidated-table-body');
@@ -1385,6 +1399,7 @@
             consolidatedTableBody.innerHTML = '';
             if (!data || data.length === 0) {
                 renderEmptyState(consolidatedTableBody, "Nenhum dado encontrado.", visibleCols.length);
+                updateMapMarkers([]); // Limpa o mapa
                 return;
             }
 
@@ -1405,7 +1420,11 @@
                 if(visibleCols.includes('valor_nota')) html += `<td class="text-right text-mono">${formatCurrency(item.valor_nota)}</td>`;
                 if(visibleCols.includes('peso')) html += `<td class="text-right text-mono">${formatDecimal(item.peso_ton)}</td>`;
                 if(visibleCols.includes('frete_total')) html += `<td class="text-right text-mono" style="font-weight:600;">${formatCurrency(item.custo_frete)}</td>`;
-                if(visibleCols.includes('perc_frete')) html += `<td class="text-right text-mono">${(item.percentual_frete_nota || 0).toFixed(2).replace('.',',')}%</td>`;
+                if(visibleCols.includes('perc_frete')) {
+                    const percFrete = item.percentual_frete_nota || 0;
+                    const style = getFretePercentageStyle(percFrete);
+                    html += `<td class="text-right text-mono" style="${style}">${percFrete.toFixed(2).replace('.',',')}%</td>`;
+                }
                 if(visibleCols.includes('custo_kg')) {
                     const custoKg = item.peso_ton > 0 ? (item.custo_frete / (item.peso_ton * 1000)) : 0;
                     html += `<td class="text-right text-mono">${formatCurrency(custoKg)}</td>`;
@@ -1775,7 +1794,7 @@
             const ufValue = {};
             
             data.forEach(item => {
-                const uf = item.uf_destinatario;
+                const uf = item.uf_destino; // <-- CORREÇÃO APLICADA AQUI
                 if (uf) {
                     ufCount[uf] = (ufCount[uf] || 0) + 1;
                     ufValue[uf] = (ufValue[uf] || 0) + (item.custo_frete || 0);
@@ -1837,25 +1856,29 @@
         document.querySelectorAll('.quick-report-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const reportType = btn.dataset.report;
+                const refreshIcon = document.getElementById('refresh-icon');
                 
                 try {
                     showToast('Carregando relatório...', 'info');
-                    
-                    // Chamar função RPC do Supabase
+                    if(refreshIcon) refreshIcon.classList.add('spinning');
+
                     const { data, error } = await supabase.rpc('get_strategic_report', {
                         report_name: reportType
                     });
                     
                     if (error) throw error;
                     
-                    // Atualizar cache e renderizar
-                    consolidatedDataSource = data || [];
-                    applyFilters();
+                    consolidatedDataCache = data || [];
+                    applyTextFilter(); 
+                    updateKpis(consolidatedDataCache);
                     
                     showToast(`Relatório "${btn.textContent.trim()}" aplicado com sucesso!`, 'success');
+
                 } catch (error) {
                     console.error('Erro ao carregar relatório:', error);
-                    showToast('Erro ao carregar relatório estratégico.', 'error');
+                    showToast('Falha ao carregar relatório. Verifique o console.', 'error');
+                } finally {
+                    if(refreshIcon) refreshIcon.classList.remove('spinning');
                 }
             });
         });
