@@ -1,3 +1,5 @@
+--- START OF FILE index - 2026-01-27T125559.479.html ---
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -5,6 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Análise de Fretes - FAMA</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/chart.js-chart-geo@4.3.0/build/index.umd.min.js"></script>
     
     <style>
         :root {
@@ -25,6 +29,15 @@
             --dropdown-bg: #FFFFFF;
             --dropdown-hover: #f3f4f6;
             --code-bg: #f3f4f6; /* Fundo para áreas de texto monoespaçado */
+            /* Cores para a legenda de performance */
+            --perf-ok-bg: rgba(16, 185, 129, 0.1);
+            --perf-ok-text: #059669;
+            --perf-warn-bg: rgba(245, 158, 11, 0.1);
+            --perf-warn-text: #d97706;
+            --perf-alert-bg: rgba(249, 115, 22, 0.1);
+            --perf-alert-text: #ea580c;
+            --perf-critical-bg: rgba(239, 68, 68, 0.1);
+            --perf-critical-text: #dc2626;
         }
 
         body.dark-theme {
@@ -40,6 +53,15 @@
             --dropdown-bg: #1f2937;
             --dropdown-hover: #374151;
             --code-bg: #111827;
+            /* Cores para a legenda de performance */
+            --perf-ok-bg: rgba(16, 185, 129, 0.15);
+            --perf-ok-text: #34d399;
+            --perf-warn-bg: rgba(245, 158, 11, 0.15);
+            --perf-warn-text: #fbbf24;
+            --perf-alert-bg: rgba(249, 115, 22, 0.15);
+            --perf-alert-text: #fb923c;
+            --perf-critical-bg: rgba(239, 68, 68, 0.15);
+            --perf-critical-text: #f87171;
         }
 
         body {
@@ -172,11 +194,40 @@
         .kpi-card .value.highlight { color: var(--primary-color); }
 
         /* --- Barra de Filtros Customizada (Multi-Select) --- */
+        .controls-container { /* Novo container */
+             margin-bottom: 24px;
+        }
+        .reports-bar { /* Nova barra de relatórios */
+            padding: 16px 20px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .reports-bar label {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-color);
+        }
+        .reports-bar select {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 14px;
+            min-width: 300px;
+            font-family: 'Inter', sans-serif;
+        }
+
         .filter-bar {
             display: flex;
             align-items: flex-end;
             gap: 16px;
-            margin-bottom: 24px;
+            /* margin-bottom: 24px; */ /* Removido, controlado pelo container */
             padding: 20px;
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -535,6 +586,35 @@
         @keyframes slideInRight { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
         @keyframes slideOutRight { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
 
+        /* Layout para mapa e tabela */
+        .visualization-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr; /* 1/3 para o mapa, 2/3 para a tabela */
+            gap: 24px;
+            align-items: flex-start;
+        }
+        .map-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 16px;
+            position: sticky; /* Faz o mapa ficar fixo durante o scroll da tabela */
+            top: 20px;
+        }
+
+        /* Legenda de Performance */
+        .perf-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 12px;
+            font-family: 'Consolas', monospace;
+        }
+        .perf-ok { background-color: var(--perf-ok-bg); color: var(--perf-ok-text); }
+        .perf-warn { background-color: var(--perf-warn-bg); color: var(--perf-warn-text); }
+        .perf-alert { background-color: var(--perf-alert-bg); color: var(--perf-alert-text); }
+        .perf-critical { background-color: var(--perf-critical-bg); color: var(--perf-critical-text); }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -585,6 +665,10 @@
                 <h3><i class="fas fa-weight-hanging"></i> CUSTO MÉDIO / TON</h3>
                 <div id="kpi-custo-ton" class="value">R$ 0,00</div>
             </div>
+            <div class="kpi-card" id="card-custo-kg" data-kpi="custo-kg">
+                <h3><i class="fas fa-balance-scale-right"></i> CUSTO MÉDIO / KG</h3>
+                <div id="kpi-custo-kg" class="value">R$ 0,00</div>
+            </div>
             <div class="kpi-card" id="card-nfes-processadas" data-kpi="nfes-processadas">
                 <h3><i class="fas fa-file-alt"></i> NF-ES PROCESSADAS</h3>
                 <div id="kpi-nfes-processadas" class="value">0</div>
@@ -607,62 +691,74 @@
             </div>
         </div>
 
-        <div class="filter-bar">
-            <div class="filter-group">
-                <label for="start-date">De:</label>
-                <input type="date" id="start-date">
+        <div class="controls-container">
+            <div class="reports-bar">
+                <label for="quick-reports">Relatórios Rápidos:</label>
+                <select id="quick-reports">
+                    <option value="geral">Visão Geral (Todos os Dados)</option>
+                    <option value="fama_vende_df_rizzo">Fama -> DF (Transportadora Rizzo)</option>
+                    <option value="fama_vende_df_outros">Fama -> DF (Outras Transportadoras)</option>
+                    <option value="fama_vende_geral">Fama -> Outros Clientes</option>
+                    <option value="fama_comprou_geral">Fama (Compras)</option>
+                </select>
             </div>
-            <div class="filter-group">
-                <label for="end-date">Até:</label>
-                <input type="date" id="end-date">
-            </div>
-            
-            <!-- Multi-Select: Operação -->
-            <div class="filter-group">
-                <label>Operação:</label>
-                <div class="custom-select-btn" id="btn-category-filter">Selecionar...</div>
-                <div class="dropdown-content" id="dropdown-category-filter">
-                    <div class="dropdown-item"><input type="checkbox" value="Venda" checked> Venda</div>
-                    <div class="dropdown-item"><input type="checkbox" value="Compra" checked> Compra</div>
-                    <div class="dropdown-item"><input type="checkbox" value="Devolução" checked> Devolução</div>
-                    <div class="dropdown-item"><input type="checkbox" value="Transferência" checked> Transferência</div>
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label for="start-date">De:</label>
+                    <input type="date" id="start-date">
                 </div>
-            </div>
-
-            <div class="filter-group">
-                <label for="cfop-filter">CFOP:</label>
-                <input type="text" id="cfop-filter" placeholder="Ex: 5102">
-            </div>
-
-            <!-- Multi-Select: Transportadora -->
-            <div class="filter-group">
-                <label>Transportadora:</label>
-                <div class="custom-select-btn" id="btn-transportadora-filter">Selecionar...</div>
-                <div class="dropdown-content" id="dropdown-transportadora-filter">
-                    <input type="text" class="search-in-dropdown" placeholder="Buscar..." onkeyup="filterDropdown(this, 'dropdown-transportadora-filter')">
-                    <div id="list-transportadora-filter"></div>
+                <div class="filter-group">
+                    <label for="end-date">Até:</label>
+                    <input type="date" id="end-date">
                 </div>
-            </div>
-
-            <!-- Multi-Select: Destinatário -->
-            <div class="filter-group">
-                <label>Destinatário:</label>
-                <div class="custom-select-btn" id="btn-destinatario-filter">Selecionar...</div>
-                <div class="dropdown-content" id="dropdown-destinatario-filter">
-                    <input type="text" class="search-in-dropdown" placeholder="Buscar..." onkeyup="filterDropdown(this, 'dropdown-destinatario-filter')">
-                    <div id="list-destinatario-filter"></div>
+                
+                <!-- Multi-Select: Operação -->
+                <div class="filter-group">
+                    <label>Operação:</label>
+                    <div class="custom-select-btn" id="btn-category-filter">Selecionar...</div>
+                    <div class="dropdown-content" id="dropdown-category-filter">
+                        <div class="dropdown-item"><input type="checkbox" value="Venda" checked> Venda</div>
+                        <div class="dropdown-item"><input type="checkbox" value="Compra" checked> Compra</div>
+                        <div class="dropdown-item"><input type="checkbox" value="Devolução" checked> Devolução</div>
+                        <div class="dropdown-item"><input type="checkbox" value="Transferência" checked> Transferência</div>
+                    </div>
                 </div>
-            </div>
-
-            <div class="filter-actions">
-                <button id="apply-filter-btn" class="action-btn-main">Filtrar</button>
-                <button id="clear-filter-btn" title="Limpar Filtros"><i class="fas fa-times"></i></button>
-                <button id="manual-refresh-btn" class="refresh-btn" title="Atualizar Dados Agora">
-                    <i class="fas fa-sync-alt" id="refresh-icon"></i>
-                </button>
-                <button id="export-excel-btn" title="Exportar para Excel">
-                    <i class="fas fa-file-excel"></i> Exportar
-                </button>
+    
+                <div class="filter-group">
+                    <label for="cfop-filter">CFOP:</label>
+                    <input type="text" id="cfop-filter" placeholder="Ex: 5102">
+                </div>
+    
+                <!-- Multi-Select: Transportadora -->
+                <div class="filter-group">
+                    <label>Transportadora:</label>
+                    <div class="custom-select-btn" id="btn-transportadora-filter">Selecionar...</div>
+                    <div class="dropdown-content" id="dropdown-transportadora-filter">
+                        <input type="text" class="search-in-dropdown" placeholder="Buscar..." onkeyup="filterDropdown(this, 'dropdown-transportadora-filter')">
+                        <div id="list-transportadora-filter"></div>
+                    </div>
+                </div>
+    
+                <!-- Multi-Select: Destinatário -->
+                <div class="filter-group">
+                    <label>Destinatário:</label>
+                    <div class="custom-select-btn" id="btn-destinatario-filter">Selecionar...</div>
+                    <div class="dropdown-content" id="dropdown-destinatario-filter">
+                        <input type="text" class="search-in-dropdown" placeholder="Buscar..." onkeyup="filterDropdown(this, 'dropdown-destinatario-filter')">
+                        <div id="list-destinatario-filter"></div>
+                    </div>
+                </div>
+    
+                <div class="filter-actions">
+                    <button id="apply-filter-btn" class="action-btn-main">Filtrar</button>
+                    <button id="clear-filter-btn" title="Limpar Filtros"><i class="fas fa-times"></i></button>
+                    <button id="manual-refresh-btn" class="refresh-btn" title="Atualizar Dados Agora">
+                        <i class="fas fa-sync-alt" id="refresh-icon"></i>
+                    </button>
+                    <button id="export-excel-btn" title="Exportar para Excel">
+                        <i class="fas fa-file-excel"></i> Exportar
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -678,16 +774,21 @@
                     <i class="fas fa-columns"></i> Colunas
                 </button>
             </div>
-            <div class="data-table-container">
-                <div class="table-scroll-wrapper">
-                    <table id="table-consolidated">
-                        <thead id="consolidated-table-head">
-                            <!-- Headers generated dynamically via JS -->
-                        </thead>
-                        <tbody id="consolidated-table-body">
-                            <!-- Rows generated dynamically via JS -->
-                        </tbody>
-                    </table>
+            <div class="visualization-grid">
+                <div id="map-container" class="map-card">
+                    <canvas id="brazil-map-chart"></canvas>
+                </div>
+                <div class="data-table-container">
+                    <div class="table-scroll-wrapper">
+                        <table id="table-consolidated">
+                            <thead id="consolidated-table-head">
+                                <!-- Headers generated dynamically via JS -->
+                            </thead>
+                            <tbody id="consolidated-table-body">
+                                <!-- Rows generated dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -832,12 +933,18 @@
             { id: 'peso', label: 'Peso (Ton)', sortable: true, align: 'right', default: true },
             { id: 'frete_total', label: 'Frete Total', sortable: true, align: 'right', default: true },
             { id: 'perc_frete', label: '% Fr/NF', sortable: true, align: 'right', default: true },
+            { id: 'custo_kg', label: 'Custo/KG', sortable: true, align: 'right', default: false },
             { id: 'agendamento', label: 'Agen.', sortable: true, align: 'right', default: true },
             { id: 'reentrega', label: 'Reent.', sortable: true, align: 'right', default: true },
             { id: 'pedagio', label: 'Pedágio', sortable: true, align: 'right', default: true },
             { id: 'ctes', label: 'CTEs', sortable: true, align: 'center', default: true },
             { id: 'acoes', label: 'Ações', sortable: false, align: 'center', default: true }
         ];
+        
+        // Map and filter state
+        let brazilMapChart = null;
+        let brazilStates = null;
+        let selectedUf = null;
 
         // --- UTILS & DEBOUNCE ---
         function debounce(func, timeout = 2000){
@@ -972,6 +1079,7 @@
             { id: 'custo-total', label: 'Custo Total (Mês)' },
             { id: 'perc-frete', label: '% Frete s/ Nota' },
             { id: 'custo-ton', label: 'Custo Médio / Ton' },
+            { id: 'custo-kg', label: 'Custo Médio / KG' },
             { id: 'nfes-processadas', label: 'NF-es Processadas' },
             { id: 'taxas-extras', label: 'Taxas Extras' },
             { id: 'peso-total', label: 'Peso Total (Ton)' },
@@ -1052,10 +1160,121 @@
                 </td></tr>`;
         }
 
+        // --- MAP LOGIC ---
+        async function initializeMap() {
+            if (!brazilStates) {
+                try {
+                    // CORREÇÃO: Trocado unpkg.com por cdn.jsdelivr.net para resolver o problema de CORS.
+                    const res = await fetch('https://cdn.jsdelivr.net/npm/brazil-states-geojson@1.0.3/geojson/brazil_states.json');
+                    brazilStates = await res.json();
+                } catch (e) {
+                    console.error("Failed to load map GeoJSON:", e);
+                    return;
+                }
+            }
+
+            const canvas = document.getElementById('brazil-map-chart');
+            if (!canvas) return;
+
+            if (brazilMapChart) {
+                brazilMapChart.destroy();
+            }
+
+            const states = ChartGeo.topojson.feature(brazilStates, brazilStates.objects.estados).features;
+
+            brazilMapChart = new Chart(canvas.getContext('2d'), {
+                type: 'choropleth',
+                data: {
+                    labels: states.map((d) => d.properties.name),
+                    datasets: [{
+                        label: 'States',
+                        outline: states,
+                        data: [],
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const d = context.raw;
+                                    if (!d) return null;
+                                    return `${d.feature.properties.name}: ${formatCurrency(d.value)}`;
+                                }
+                            }
+                        }
+                    },
+                    onClick: (evt, elements) => {
+                        if (elements.length === 0) {
+                            selectedUf = null;
+                        } else {
+                            const clickedUf = elements[0].element.feature.properties.sigla;
+                            selectedUf = (selectedUf === clickedUf) ? null : clickedUf;
+                        }
+                        applyClientSideFilters();
+                        updateMap(filteredConsolidatedData);
+                    },
+                    scales: {
+                        projection: {
+                            axis: 'x',
+                            projection: 'mercator',
+                        },
+                        color: {
+                            axis: 'x',
+                            quantize: 5,
+                            interpolate: 'reds',
+                            legend: {
+                                position: 'bottom-right',
+                                title: { display: true, text: 'Custo do Frete' }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateMap(data) {
+            if (!brazilMapChart || !brazilStates) return;
+
+            const states = ChartGeo.topojson.feature(brazilStates, brazilStates.objects.estados).features;
+            
+            const dataByUf = data.reduce((acc, item) => {
+                if (item.uf_destino) {
+                    acc[item.uf_destino] = (acc[item.uf_destino] || 0) + (item.custo_frete || 0);
+                }
+                return acc;
+            }, {});
+
+            const mapData = states.map(s => ({
+                feature: s,
+                value: dataByUf[s.properties.sigla] || 0
+            }));
+
+            brazilMapChart.data.datasets[0].data = mapData;
+            
+            brazilMapChart.data.datasets[0].outline = selectedUf 
+                ? states.filter(s => s.properties.sigla === selectedUf)
+                : states;
+
+            brazilMapChart.options.scales.projection.fit = selectedUf ? 'outline' : 'countries';
+
+            brazilMapChart.update();
+        }
+
         // --- LOGICA DE DADOS ---
+        function getPercFreteClass(perc) {
+            if (perc == null) return '';
+            if (perc <= 5) return 'perf-badge perf-ok';
+            if (perc > 5 && perc <= 10) return 'perf-badge perf-warn';
+            if (perc > 10 && perc <= 15) return 'perf-badge perf-alert';
+            if (perc > 15) return 'perf-badge perf-critical';
+            return '';
+        }
+
         function updateKpis(data) {
             if (!data || data.length === 0) {
-                ['kpi-custo-total', 'kpi-custo-ton', 'kpi-taxas-extras', 'kpi-valor-notas'].forEach(id => document.getElementById(id).textContent = 'R$ 0,00');
+                ['kpi-custo-total', 'kpi-custo-ton', 'kpi-custo-kg', 'kpi-taxas-extras', 'kpi-valor-notas'].forEach(id => document.getElementById(id).textContent = 'R$ 0,00');
                 ['kpi-perc-frete'].forEach(id => document.getElementById(id).textContent = '0,00%');
                 ['kpi-nfes-processadas', 'kpi-ctes-pendentes'].forEach(id => document.getElementById(id).textContent = '0');
                 ['kpi-peso-total'].forEach(id => document.getElementById(id).textContent = '0,00');
@@ -1073,10 +1292,12 @@
 
             const percentualFreteMedio = totals.valorTotalNota > 0 ? (totals.custoTotal / totals.valorTotalNota) * 100 : 0;
             const custoMedioPorTon = totals.pesoTotalTon > 0 ? totals.custoTotal / totals.pesoTotalTon : 0;
+            const custoMedioPorKg = (totals.pesoTotalTon * 1000) > 0 ? totals.custoTotal / (totals.pesoTotalTon * 1000) : 0;
 
             document.getElementById('kpi-custo-total').textContent = formatCurrency(totals.custoTotal);
             document.getElementById('kpi-perc-frete').textContent = `${percentualFreteMedio.toFixed(2).replace('.',',')}%`;
             document.getElementById('kpi-custo-ton').textContent = formatCurrency(custoMedioPorTon);
+            document.getElementById('kpi-custo-kg').textContent = formatCurrency(custoMedioPorKg);
             document.getElementById('kpi-nfes-processadas').textContent = data.length;
             document.getElementById('kpi-taxas-extras').textContent = formatCurrency(totals.custoTaxasExtras);
             document.getElementById('kpi-peso-total').textContent = totals.pesoTotalTon.toFixed(3).replace('.',',');
@@ -1101,28 +1322,14 @@
 
             // Transportadora
             const tContainer = document.getElementById('list-transportadora-filter');
-            const currentT = getSelectedOptions('transportadora-filter');
-            const hasCurrentT = currentT.length > 0;
-            
             tContainer.innerHTML = '';
-            Array.from(transportadoras).sort().forEach(t => {
-                const div = createCheckboxItem(t);
-                if (hasCurrentT && !currentT.includes(t)) div.querySelector('input').checked = false;
-                tContainer.appendChild(div);
-            });
+            Array.from(transportadoras).sort().forEach(t => tContainer.appendChild(createCheckboxItem(t)));
             updateSelectButtonLabel('transportadora-filter', 'Todas');
 
             // Destinatario
             const dContainer = document.getElementById('list-destinatario-filter');
-            const currentD = getSelectedOptions('destinatario-filter');
-            const hasCurrentD = currentD.length > 0;
-
             dContainer.innerHTML = '';
-            Array.from(destinatarios).sort().forEach(d => {
-                const div = createCheckboxItem(d);
-                if (hasCurrentD && !currentD.includes(d)) div.querySelector('input').checked = false;
-                dContainer.appendChild(div);
-            });
+            Array.from(destinatarios).sort().forEach(d => dContainer.appendChild(createCheckboxItem(d)));
             updateSelectButtonLabel('destinatario-filter', 'Todos');
 
             document.querySelectorAll('#dropdown-transportadora-filter input').forEach(i => i.addEventListener('change', () => updateSelectButtonLabel('transportadora-filter')));
@@ -1130,68 +1337,91 @@
             document.querySelectorAll('#dropdown-destinatario-filter input').forEach(i => i.addEventListener('change', () => updateSelectButtonLabel('destinatario-filter')));
         }
 
-        async function fetchAndRenderConsolidatedData(filters) {
-            let query = supabase.from('relatorio_consolidado').select('*').eq('ignorado', false).order('data_emissao_nfe', { ascending: false });
-            
-            if (filters.startDate) query = query.gte('data_emissao_nfe', filters.startDate);
-            if (filters.endDate) query = query.lte('data_emissao_nfe', filters.endDate);
-            if (filters.cfop) query = query.like('cfop_original', `%${filters.cfop}%`);
-            
-            const categories = getSelectedOptions('category-filter');
-            if (categories.length > 0) query = query.in('categoria_frete', categories);
+        async function fetchAndRenderConsolidatedData() {
+            // CORREÇÃO: Removida a chamada RPC. Voltamos a buscar todos os dados da tabela.
+            // A lógica de "Relatórios Rápidos" será aplicada no frontend.
+            const { data, error } = await supabase.from('relatorio_consolidado').select('*').order('data_emissao_nfe', { ascending: false });
 
-            const carriers = getSelectedOptions('transportadora-filter');
-            if (carriers.length > 0) query = query.in('nome_transportadora', carriers);
-
-            const clients = getSelectedOptions('destinatario-filter');
-            if (clients.length > 0) query = query.in('cliente_destinatario', clients);
-
-            const { data, error } = await query;
             if (error) { 
-                console.error('Erro:', error);
-                showToast('Erro ao buscar dados.', 'error');
-                return; 
+                console.error('Erro ao buscar dados:', error);
+                showToast('Erro ao buscar dados da tabela.', 'error');
+                consolidatedDataCache = [];
+            } else {
+                consolidatedDataCache = data || [];
             }
-
-            consolidatedDataCache = data || [];
-            updateKpis(data);
             
-            // Popula filtros apenas se a lista estiver vazia (primeira carga ou limpeza)
-            const tContainer = document.getElementById('list-transportadora-filter');
-            if(tContainer.children.length === 0) populateDynamicFilters(data);
-
-            applyTextFilter(); 
+            populateDynamicFilters(consolidatedDataCache);
+            applyClientSideFilters(); 
         }
 
-        function applyTextFilter() {
-            const searchText = document.getElementById('search-consolidated').value.toLowerCase();
-            
-            if (!searchText) {
-                filteredConsolidatedData = consolidatedDataCache;
-            } else {
-                filteredConsolidatedData = consolidatedDataCache.filter(item => {
-                    return (
-                        (item.chave_nfe && item.chave_nfe.toLowerCase().includes(searchText)) ||
-                        (item.cliente_destinatario && item.cliente_destinatario.toLowerCase().includes(searchText)) ||
-                        (item.nome_transportadora && item.nome_transportadora.toLowerCase().includes(searchText)) ||
-                        (item.informacoes_complementares && item.informacoes_complementares.toLowerCase().includes(searchText)) ||
-                        (item.observacao_cte && item.observacao_cte.toLowerCase().includes(searchText)) ||
-                        (item.valor_nota && item.valor_nota.toString().includes(searchText))
-                    );
-                });
+        function applyClientSideFilters() {
+            const reportType = document.getElementById('quick-reports').value;
+            let dataToFilter = [...consolidatedDataCache];
+
+            // CORREÇÃO: Implementada a lógica dos "Relatórios Rápidos" no frontend.
+            if (reportType === 'fama_vende_df_rizzo') {
+                dataToFilter = dataToFilter.filter(item => 
+                    item.categoria_frete === 'Venda' && 
+                    item.uf_destino === 'DF' && 
+                    item.nome_transportadora?.toUpperCase().includes('RIZZO')
+                );
+            } else if (reportType === 'fama_vende_df_outros') {
+                dataToFilter = dataToFilter.filter(item => 
+                    item.categoria_frete === 'Venda' && 
+                    item.uf_destino === 'DF' && 
+                    !item.nome_transportadora?.toUpperCase().includes('RIZZO')
+                );
+            } else if (reportType === 'fama_vende_geral') {
+                 dataToFilter = dataToFilter.filter(item => item.categoria_frete === 'Venda');
+            } else if (reportType === 'fama_comprou_geral') {
+                 dataToFilter = dataToFilter.filter(item => item.categoria_frete === 'Compra');
             }
+
+            const filters = {
+                startDate: document.getElementById('start-date').value,
+                endDate: document.getElementById('end-date').value,
+                cfop: document.getElementById('cfop-filter').value.trim(),
+                searchText: document.getElementById('search-consolidated').value.toLowerCase(),
+                categories: getSelectedOptions('category-filter'),
+                carriers: getSelectedOptions('transportadora-filter'),
+                clients: getSelectedOptions('destinatario-filter')
+            };
+
+            filteredConsolidatedData = dataToFilter.filter(item => {
+                const itemDate = item.data_emissao_nfe ? item.data_emissao_nfe.split('T')[0] : '';
+                
+                const dateMatch = (!filters.startDate || itemDate >= filters.startDate) && (!filters.endDate || itemDate <= filters.endDate);
+                const cfopMatch = !filters.cfop || (item.cfop_original && item.cfop_original.includes(filters.cfop));
+                const categoryMatch = filters.categories.length === 0 || filters.categories.includes(item.categoria_frete);
+                const carrierMatch = filters.carriers.length === 0 || filters.carriers.includes(item.nome_transportadora);
+                const clientMatch = filters.clients.length === 0 || filters.clients.includes(item.cliente_destinatario);
+                const ufMatch = !selectedUf || item.uf_destino === selectedUf;
+
+                const searchMatch = !filters.searchText || (
+                    (item.chave_nfe && item.chave_nfe.toLowerCase().includes(filters.searchText)) ||
+                    (item.cliente_destinatario && item.cliente_destinatario.toLowerCase().includes(filters.searchText)) ||
+                    (item.nome_transportadora && item.nome_transportadora.toLowerCase().includes(filters.searchText)) ||
+                    (item.informacoes_complementares && item.informacoes_complementares.toLowerCase().includes(filters.searchText)) ||
+                    (item.observacao_cte && item.observacao_cte.toLowerCase().includes(filters.searchText)) ||
+                    (item.valor_nota && item.valor_nota.toString().includes(filters.searchText))
+                );
+                
+                return dateMatch && cfopMatch && categoryMatch && carrierMatch && clientMatch && ufMatch && searchMatch;
+            });
+
+            updateKpis(filteredConsolidatedData);
+            updateMap(filteredConsolidatedData);
             renderConsolidatedTable();
         }
-
+        
         document.getElementById('search-consolidated').addEventListener('keyup', debounce(() => {
-            applyTextFilter();
+            applyClientSideFilters();
         }, 300));
 
         function renderConsolidatedTable() {
             const data = filteredConsolidatedData;
             const visibleCols = loadColumnSettings();
             
-            // 1. Render Header
             consolidatedTableHead.innerHTML = '';
             const trHead = document.createElement('tr');
             AVAILABLE_COLUMNS.forEach(col => {
@@ -1205,7 +1435,6 @@
             });
             consolidatedTableHead.appendChild(trHead);
 
-            // 2. Render Body
             consolidatedTableBody.innerHTML = '';
             if (!data || data.length === 0) {
                 renderEmptyState(consolidatedTableBody, "Nenhum dado encontrado.", visibleCols.length);
@@ -1229,7 +1458,11 @@
                 if(visibleCols.includes('valor_nota')) html += `<td class="text-right text-mono">${formatCurrency(item.valor_nota)}</td>`;
                 if(visibleCols.includes('peso')) html += `<td class="text-right text-mono">${formatDecimal(item.peso_ton)}</td>`;
                 if(visibleCols.includes('frete_total')) html += `<td class="text-right text-mono" style="font-weight:600;">${formatCurrency(item.custo_frete)}</td>`;
-                if(visibleCols.includes('perc_frete')) html += `<td class="text-right text-mono">${(item.percentual_frete_nota || 0).toFixed(2).replace('.',',')}%</td>`;
+                if(visibleCols.includes('perc_frete')) html += `<td class="text-right"><span class="${getPercFreteClass(item.percentual_frete_nota)}">${(item.percentual_frete_nota || 0).toFixed(2).replace('.',',')}%</span></td>`;
+                if(visibleCols.includes('custo_kg')) {
+                    const custoKg = (item.peso_ton && item.peso_ton > 0) ? (item.custo_frete / (item.peso_ton * 1000)) : 0;
+                    html += `<td class="text-right text-mono">${formatCurrency(custoKg)}</td>`;
+                }
                 if(visibleCols.includes('agendamento')) html += `<td class="text-right text-mono">${formatCurrencyOrDash(item.valor_agendamento)}</td>`;
                 if(visibleCols.includes('reentrega')) html += `<td class="text-right text-mono">${formatCurrencyOrDash(item.valor_reentrega)}</td>`;
                 if(visibleCols.includes('pedagio')) html += `<td class="text-right text-mono">${formatCurrencyOrDash(item.valor_pedagio)}</td>`;
@@ -1341,31 +1574,21 @@
         // --- ACTIONS & REFRESH ---
         const debouncedRefresh = debounce(refreshDashboard, 2000);
 
-        async function refreshDashboard(shouldFetch = true) {
-            if (!shouldFetch) {
-                renderConsolidatedTable();
-                return;
-            }
-            
-            const filters = {
-                startDate: document.getElementById('start-date').value,
-                endDate: document.getElementById('end-date').value,
-                cfop: document.getElementById('cfop-filter').value.trim()
-                // other filters are grabbed inside fetchAndRenderConsolidatedData via getSelectedOptions
-            };
-            
+        async function refreshDashboard() {
             try {
                 await Promise.all([
-                    fetchAndRenderConsolidatedData(filters),
-                    fetchAndRenderRawData(filters.startDate, filters.endDate)
+                    fetchAndRenderConsolidatedData(),
+                    fetchAndRenderRawData(document.getElementById('start-date').value, document.getElementById('end-date').value)
                 ]);
             } catch (error) {
                 console.error(error);
                 showToast("Erro na atualização.", "error");
             }
         }
-
-        document.getElementById('apply-filter-btn').addEventListener('click', () => refreshDashboard());
+        
+        // CORREÇÃO: O evento 'change' agora chama o filtro no frontend diretamente.
+        document.getElementById('quick-reports').addEventListener('change', () => applyClientSideFilters());
+        document.getElementById('apply-filter-btn').addEventListener('click', () => applyClientSideFilters());
         document.getElementById('manual-refresh-btn').addEventListener('click', () => refreshDashboard());
         document.getElementById('export-excel-btn').addEventListener('click', exportToExcel);
         
@@ -1374,9 +1597,22 @@
             document.getElementById('end-date').value = '';
             document.getElementById('cfop-filter').value = '';
             document.getElementById('search-consolidated').value = '';
-            document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = true);
-            ['category-filter', 'transportadora-filter', 'destinatario-filter'].forEach(id => updateSelectButtonLabel(id));
-            refreshDashboard();
+            document.getElementById('quick-reports').value = 'geral';
+            selectedUf = null;
+            
+            const transportadoraDropdown = document.getElementById('dropdown-transportadora-filter');
+            transportadoraDropdown.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = true);
+            updateSelectButtonLabel('transportadora-filter');
+
+            const destinatarioDropdown = document.getElementById('dropdown-destinatario-filter');
+            destinatarioDropdown.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = true);
+            updateSelectButtonLabel('destinatario-filter');
+
+            const categoryDropdown = document.getElementById('dropdown-category-filter');
+            categoryDropdown.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = true);
+            updateSelectButtonLabel('category-filter');
+
+            applyClientSideFilters();
             showToast('Filtros limpos.', 'success');
         });
 
@@ -1530,6 +1766,7 @@
         });
 
         // Init
+        initializeMap();
         applyKpiVisibility();
         refreshDashboard();
 
