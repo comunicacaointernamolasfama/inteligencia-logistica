@@ -997,14 +997,15 @@
         const AVAILABLE_COLUMNS = [
             { id: 'data', label: 'Data Emissão', sortable: true, default: true },
             { id: 'chave', label: 'Chave NF-e', sortable: true, default: true },
+            { id: 'emitente', label: 'Emitente', sortable: true, default: false },
             { id: 'destinatario', label: 'Destinatário', sortable: true, default: true },
             { id: 'transportadora', label: 'Transportadora', sortable: true, default: true },
             { id: 'operacao', label: 'Operação', sortable: true, default: true },
             { id: 'cfop', label: 'CFOP', sortable: true, default: true },
             { id: 'volumes', label: 'Vol.', sortable: true, default: true },
             { id: 'especie', label: 'Espécie', sortable: true, default: true },
-            { id: 'info', label: 'Info. Compl.', sortable: false, default: false }, // Info Curta
-            { id: 'obs_cte', label: 'Obs. CTe', sortable: false, default: false }, // Nova Coluna (Opcional)
+            { id: 'info', label: 'Info. Compl.', sortable: false, default: false },
+            { id: 'obs_cte', label: 'Obs. CTe', sortable: false, default: false },
             { id: 'valor_nota', label: 'Valor Nota', sortable: true, align: 'right', default: true },
             { id: 'peso', label: 'Peso (Ton)', sortable: true, align: 'right', default: true },
             { id: 'frete_total', label: 'Frete Total', sortable: true, align: 'right', default: true },
@@ -1036,14 +1037,13 @@
         const formatCurrencyOrDash = (val) => (val && val !== 0) ? val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '<span style="color:var(--text-secondary); opacity:0.5;">--</span>';
         const formatDecimal = (val) => (val || 0).toFixed(3).replace('.',',');
         
-        // --- FUNÇÃO AUXILIAR PARA O SEMÁFORO ---
         function getFretePercentageStyle(percentage) {
             const perc = percentage || 0;
-            if (perc > 8)  return 'background-color: rgba(239, 68, 68, 0.25);';   // Vermelho (Crítico)
-            if (perc > 7) return 'background-color: rgba(249, 115, 22, 0.25);'; // Laranja (Alerta)
-            if (perc > 5) return 'background-color: rgba(234, 179, 8, 0.25);';  // Amarelo (Atenção)
-            if (perc > 0) return 'background-color: rgba(16, 185, 129, 0.15);'; // Verde (Saudável)
-            return ''; // Padrão
+            if (perc > 8)  return 'background-color: rgba(239, 68, 68, 0.25);';
+            if (perc > 7) return 'background-color: rgba(249, 115, 22, 0.25);';
+            if (perc > 5) return 'background-color: rgba(234, 179, 8, 0.25);';
+            if (perc > 0) return 'background-color: rgba(16, 185, 129, 0.15);';
+            return '';
         }
 
         // --- STATE MANAGEMENT ---
@@ -1051,7 +1051,7 @@
         const consolidatedTableHead = document.getElementById('consolidated-table-head');
         const rawDataTableBody = document.getElementById('raw-data-table-body');
         let consolidatedDataCache = [];
-        let filteredConsolidatedData = []; // Cache filtrado localmente
+        let filteredConsolidatedData = [];
         let rawDataSource = [];
         let currentRawDataFilter = 'all';
 
@@ -1164,7 +1164,8 @@
             { id: 'taxas-extras', label: 'Taxas Extras' },
             { id: 'peso-total', label: 'Peso Total (Ton)' },
             { id: 'valor-notas', label: 'Valor Total Notas' },
-            { id: 'ctes-pendentes', label: 'CT-es Pendentes' }
+            { id: 'ctes-pendentes', label: 'CT-es Pendentes' },
+            { id: 'custo-kg', label: 'Custo por KG' }
         ];
 
         function loadKpiPreferences() {
@@ -1364,7 +1365,7 @@
                         (item.chave_nfe && item.chave_nfe.toLowerCase().includes(searchText)) ||
                         (item.cliente_destinatario && item.cliente_destinatario.toLowerCase().includes(searchText)) ||
                         (item.nome_transportadora && item.nome_transportadora.toLowerCase().includes(searchText)) ||
-                        (item.informacoes_complementares && item.informacoes_complementares.toLowerCase().includes(searchText)) ||
+                        (item.info_complementar && item.info_complementar.toLowerCase().includes(searchText)) ||
                         (item.observacao_cte && item.observacao_cte.toLowerCase().includes(searchText)) ||
                         (item.valor_nota && item.valor_nota.toString().includes(searchText))
                     );
@@ -1409,6 +1410,7 @@
                 
                 if(visibleCols.includes('data')) html += `<td>${new Date(item.data_emissao_nfe).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>`;
                 if(visibleCols.includes('chave')) html += `<td><span title="${item.chave_nfe}">${item.chave_nfe.substring(0, 20)}...</span></td>`;
+                if(visibleCols.includes('emitente')) html += `<td>${item.nome_emitente || '--'}</td>`;
                 if(visibleCols.includes('destinatario')) html += `<td>${item.cliente_destinatario || '--'}</td>`;
                 if(visibleCols.includes('transportadora')) html += `<td>${item.nome_transportadora || '--'}</td>`;
                 if(visibleCols.includes('operacao')) html += `<td>${getCategoryBadge(item.categoria_frete)}</td>`;
@@ -1473,7 +1475,7 @@
             const [{data: ctes}, {data: nfes}] = await Promise.all([ctesQuery, nfesQuery]);
             
             rawDataSource = [
-                ...(ctes || []).map(d => ({ ...d, type: 'CT-e', key: d.chave_acesso_propria, value: d.valor_servico, link: d.link_xml, transportadora: d.nome_transportadora, tipo_servico: d.tipo_servico_cte })),
+                ...(ctes || []).map(d => ({ ...d, type: 'CT-e', key: d.chave_acesso_propria, value: d.valor_servico, link: d.link_xml, transportadora: d.nome_transportadora, tipo_servico: d.tipo_servico })),
                 ...(nfes || []).map(d => ({ ...d, type: 'NF-e', key: d.chave_acesso_propria, value: d.valor_total_nota, link: d.link_xml, transportadora: d.nome_transportadora || '--', tipo_servico: '--' }))
             ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
             
@@ -1514,6 +1516,8 @@
             const dataToExport = filteredConsolidatedData.map(item => ({
                 'Data Emissão': new Date(item.data_emissao_nfe).toLocaleDateString('pt-BR'),
                 'Chave NFe': item.chave_nfe,
+                'Emitente': item.nome_emitente,
+                'CNPJ Emitente': item.cnpj_emitente,
                 'Destinatário': item.cliente_destinatario,
                 'Transportadora': item.nome_transportadora,
                 'UF': item.uf_destino,
@@ -1553,7 +1557,6 @@
                 startDate: document.getElementById('start-date').value,
                 endDate: document.getElementById('end-date').value,
                 cfop: document.getElementById('cfop-filter').value.trim()
-                // other filters are grabbed inside fetchAndRenderConsolidatedData via getSelectedOptions
             };
             
             try {
@@ -1691,7 +1694,6 @@
             obsDiv.textContent = item.observacao_cte || 'Nenhuma observação no CT-e.';
             obsDiv.className = item.observacao_cte ? 'audit-text-box' : 'audit-text-box empty';
 
-            document.getElementById('audit-modal').classList.add('active');
         };
 
         document.getElementById('close-audit-modal').addEventListener('click', () => {
@@ -1751,63 +1753,47 @@
         };
 
         function initMap() {
-            if (!map) {
-                map = L.map('map', {
-                    center: [-14.2350, -51.9253],
-                    zoom: 4,
-                    zoomControl: true
-                });
-                
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap'
-                }).addTo(map);
+            if (map) return;
+            map = L.map('map', { center: [-14.2350, -51.9253], zoom: 4, zoomControl: true });
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
 
-                // Carregar GeoJSON do Brasil
-                fetch('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson')
-                    .then(response => response.json())
-                    .then(data => {
-                        brazilLayer = L.geoJSON(data, {
-                            style: feature => ({
-                                fillColor: '#e5e7eb',
-                                weight: 1,
-                                opacity: 1,
-                                color: '#6b7280',
-                                fillOpacity: 0.3
-                            }),
-                            onEachFeature: (feature, layer) => {
-                                layer.bindTooltip(feature.properties.name, {
-                                    permanent: false,
-                                    direction: 'center',
-                                    className: 'state-label'
-                                });
-                            }
-                        }).addTo(map);
-                    });
-            }
+            fetch('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson')
+                .then(response => response.json())
+                .then(data => {
+                    brazilLayer = L.geoJSON(data, {
+                        style: () => ({
+                            fillColor: '#e5e7eb', weight: 1, opacity: 1, color: '#6b7280', fillOpacity: 0.3
+                        }),
+                        onEachFeature: (feature, layer) => {
+                            layer.bindTooltip(feature.properties.name, {
+                                permanent: false, direction: 'center', className: 'state-label'
+                            });
+                        }
+                    }).addTo(map);
+                }).catch(err => console.error("Falha ao carregar GeoJSON:", err));
         }
 
         function updateMapMarkers(data) {
-            if (!map || !brazilLayer) return;
+            if (!brazilLayer) {
+                console.warn("Camada do mapa (brazilLayer) ainda não carregada.");
+                return;
+            }
             
-            // Contar fretes por UF
             const ufCount = {};
             const ufValue = {};
             
             data.forEach(item => {
-                const uf = item.uf_destino; // <-- CORREÇÃO APLICADA AQUI
+                const uf = item.uf_destino;
                 if (uf) {
                     ufCount[uf] = (ufCount[uf] || 0) + 1;
                     ufValue[uf] = (ufValue[uf] || 0) + (item.custo_frete || 0);
                 }
             });
 
-            // Encontrar valores máximos para normalização
             const maxCount = Math.max(...Object.values(ufCount), 1);
             
-            // Atualizar estilo de cada estado
             brazilLayer.eachLayer(layer => {
-                const stateName = layer.feature.properties.name;
-                const uf = layer.feature.properties.sigla || getUFFromName(stateName);
+                const uf = layer.feature.properties.sigla;
                 const count = ufCount[uf] || 0;
                 const value = ufValue[uf] || 0;
                 const region = stateToRegion[uf];
@@ -1818,38 +1804,16 @@
                         fillColor: regionColors[region] || '#ef4444',
                         fillOpacity: opacity,
                         weight: 2,
-                        color: '#fff'
+                        color: 'white'
                     });
-                    
-                    layer.bindPopup(`
-                        <strong>${stateName} (${uf})</strong><br>
-                        Região: ${region}<br>
-                        Fretes: ${count}<br>
-                        Total: ${formatCurrency(value)}
-                    `);
+                    layer.bindPopup(`<strong>${layer.feature.properties.name} (${uf})</strong><br>Fretes: ${count}<br>Total: ${formatCurrency(value)}`);
                 } else {
                     layer.setStyle({
-                        fillColor: '#e5e7eb',
-                        fillOpacity: 0.3,
-                        weight: 1,
-                        color: '#6b7280'
+                        fillColor: '#e5e7eb', fillOpacity: 0.3, weight: 1, color: '#6b7280'
                     });
                     layer.unbindPopup();
                 }
             });
-        }
-
-        function getUFFromName(name) {
-            const nameMap = {
-                'Acre': 'AC', 'Alagoas': 'AL', 'Amapá': 'AP', 'Amazonas': 'AM',
-                'Bahia': 'BA', 'Ceará': 'CE', 'Distrito Federal': 'DF', 'Espírito Santo': 'ES',
-                'Goiás': 'GO', 'Maranhão': 'MA', 'Mato Grosso': 'MT', 'Mato Grosso do Sul': 'MS',
-                'Minas Gerais': 'MG', 'Pará': 'PA', 'Paraíba': 'PB', 'Paraná': 'PR',
-                'Pernambuco': 'PE', 'Piauí': 'PI', 'Rio de Janeiro': 'RJ', 'Rio Grande do Norte': 'RN',
-                'Rio Grande do Sul': 'RS', 'Rondônia': 'RO', 'Roraima': 'RR', 'Santa Catarina': 'SC',
-                'São Paulo': 'SP', 'Sergipe': 'SE', 'Tocantins': 'TO'
-            };
-            return nameMap[name] || '';
         }
 
         // --- RELATÓRIOS RÁPIDOS ---
@@ -1872,7 +1836,7 @@
                     applyTextFilter(); 
                     updateKpis(consolidatedDataCache);
                     
-                    showToast(`Relatório "${btn.textContent.trim()}" aplicado com sucesso!`, 'success');
+                    showToast(`Relatório "${btn.textContent.trim().replace(/\s+/g, ' ')}" aplicado!`, 'success');
 
                 } catch (error) {
                     console.error('Erro ao carregar relatório:', error);
@@ -1883,7 +1847,7 @@
             });
         });
 
-        // Init
+        // --- INIT ---
         initMap();
         applyKpiVisibility();
         refreshDashboard();
